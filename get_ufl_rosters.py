@@ -84,7 +84,7 @@ def ufl_roster_data(
     )
 
     current_week = int(schedule_df["week"].max())
-
+    
     for t_id in range(1,9):
         pass
 

@@ -174,22 +174,18 @@ def get_ufl_standings(
     conf_standings_df = pd.concat(conf_standings_df_arr, ignore_index=True)
     del conf_standings_df_arr
 
-    conf_standings_df[["W", "L"]] = conf_standings_df["W-L"].str.split("-", expand=True)
+    conf_standings_df[["W", "L"]] = conf_standings_df[
+        "W-L"].str.split("-", expand=True)
 
-    conf_standings_df[["home_W", "home_L"]] = conf_standings_df["home_W-L"].str.split(
-        "-", expand=True
-    )
+    conf_standings_df[["home_W", "home_L"]] = conf_standings_df[
+        "home_W-L"].str.split("-", expand=True)
 
-    conf_standings_df[["away_W", "away_L"]] = conf_standings_df["away_W-L"].str.split(
-        "-", expand=True
-    )
+    conf_standings_df[["away_W", "away_L"]] = conf_standings_df[
+        "away_W-L"].str.split("-", expand=True)
 
-    conf_standings_df[["div_W", "div_L"]] = conf_standings_df["div_W-L"].str.split(
-        "-", expand=True
-    )
-    conf_standings_df.replace("-", np.nan, inplace=True).replace(
-        "", np.nan, inplace=True
-    )
+    conf_standings_df[["div_W", "div_L"]] = conf_standings_df[
+        "div_W-L"].str.split("-", expand=True)
+    conf_standings_df.replace("", np.nan, inplace=True)
     conf_standings_df = conf_standings_df.fillna(0)
 
     conf_standings_df = conf_standings_df.astype(
@@ -242,22 +238,18 @@ def get_ufl_standings(
     lg_standings_df = pd.concat(lg_standings_df_arr, ignore_index=True)
     del lg_standings_df_arr
 
-    lg_standings_df[["W", "L"]] = lg_standings_df["W-L"].str.split("-", expand=True)
+    lg_standings_df[["W", "L"]] = lg_standings_df[
+        "W-L"].str.split("-", expand=True)
 
-    lg_standings_df[["home_W", "home_L"]] = lg_standings_df["home_W-L"].str.split(
-        "-", expand=True
-    )
+    lg_standings_df[["home_W", "home_L"]] = lg_standings_df[
+        "home_W-L"].str.split("-", expand=True)
 
-    lg_standings_df[["away_W", "away_L"]] = lg_standings_df["away_W-L"].str.split(
-        "-", expand=True
-    )
+    lg_standings_df[["away_W", "away_L"]] = lg_standings_df[
+        "away_W-L"].str.split("-", expand=True)
 
-    lg_standings_df[["div_W", "div_L"]] = lg_standings_df["div_W-L"].str.split(
-        "-", expand=True
-    )
-    lg_standings_df.replace(
-        "-", np.nan, inplace=True).replace(
-            "", np.nan, inplace=True)
+    lg_standings_df[["div_W", "div_L"]] = lg_standings_df[
+        "div_W-L"].str.split("-", expand=True)
+    lg_standings_df.replace("", np.nan, inplace=True)
     lg_standings_df = lg_standings_df.fillna(0)
 
     lg_standings_df = lg_standings_df.astype(
@@ -290,7 +282,8 @@ def get_ufl_standings(
 
     if save_csv is True:
         conf_standings_df.to_csv(
-            "standings/current_standings/" + f"{season}_ufl_conference_standings.csv",
+            "standings/current_standings/" +
+            f"{season}_ufl_conference_standings.csv",
             index=False,
         )
         conf_standings_df.to_csv(
@@ -320,7 +313,8 @@ def get_ufl_standings(
             index=False,
         )
         lg_standings_df.to_csv(
-            "standings/current_standings/" + f"{season}_ufl_league_standings.parquet",
+            "standings/current_standings/" +
+            f"{season}_ufl_league_standings.parquet",
             index=False,
         )
         lg_standings_df.to_csv(
@@ -363,9 +357,15 @@ if __name__ == "__main__":
 
     parser = ArgumentParser()
 
-    parser.add_argument("--save_csv", default=False, action=BooleanOptionalAction)
-    parser.add_argument("--save_parquet", default=False, action=BooleanOptionalAction)
-    parser.add_argument("--save_json", default=False, action=BooleanOptionalAction)
+    parser.add_argument(
+        "--save_csv", default=False, action=BooleanOptionalAction
+    )
+    parser.add_argument(
+        "--save_parquet", default=False, action=BooleanOptionalAction
+    )
+    parser.add_argument(
+        "--save_json", default=False, action=BooleanOptionalAction
+    )
 
     args = parser.parse_args()
 
