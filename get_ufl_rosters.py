@@ -85,7 +85,8 @@ def ufl_roster_data(
 
     current_week = int(schedule_df["week"].max())
 
-    
+    for t_id in range(1,9):
+        pass
 
     roster_df = roster_df[columns_order]
     if save_csv is True:
