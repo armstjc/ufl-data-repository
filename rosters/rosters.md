@@ -29,3 +29,19 @@ _NOTE: `{week}` will have a leading zero if `{week} < 10`. So if you want the UF
 
 ## Columns
 
+| Column Name           | Description                                                              |
+| --------------------- | ------------------------------------------------------------------------ |
+| season                | The UFL season these rosters belong to.                                  |
+| week                  | The week these rosters come from.                                        |
+| team_id               | The FOX Sports team ID for this UFL team.                                |
+| player_id             | The FOX Sports player ID for this UFL player.                            |
+| player_analytics_name | The FOX Sports Team Analytics ID for this UFL player.                    |
+| player_num            | The jersey number of this player                                         |
+| player_name           | The full name of this player                                             |
+| position              | The intended position this player plays at.                              |
+| player_age            | The age of this player.                                                  |
+| player_height         | The height of this player, in inches.                                    |
+| player_weight         | The weight of this player, in pounds.                                    |
+| college               | The last college (or colleges) this player attended to play football at. |
+| last_updated          | The ISO 8061 date and time of when these rosters were downloaded.        |
+| player_headshot       | A URL that points to this UFL player's official headshot.                |
