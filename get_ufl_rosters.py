@@ -102,6 +102,9 @@ def ufl_roster_data(
     )
 
     current_week = int(schedule_df["week"].max())
+    # Doing this so the rosters are always up to date
+    # with the current week.
+    current_week += 1
 
     for t_id in tqdm(range(1, 9)):
         url = (
