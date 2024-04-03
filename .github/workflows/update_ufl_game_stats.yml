@@ -1,8 +1,8 @@
-name: Update UFL Schedules
+name: Update UFL Game Stats
 on:
   schedule:
-    - cron: "25 0-2,8-23 * 3-6 0,6"
-    - cron: "5 4 3 1,2,7-12 6"
+    - cron: "15 0-2,8-23 * 3-6 0,6"
+    - cron: "15 4 3 1,2,7-12 6"
   push:
     branches: [main]
   # pull_request:
@@ -34,17 +34,27 @@ jobs:
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
       - name: run Python Script
         env:
-          FOX_API_TOKEN: ${{ secrets.FOX_API_TOKEN }}
+          FOX_API_TOKEN: ${{ secrets.FOX_API_TOKEN}}
         run: |
-          python get_ufl_schedules.py --save_csv --save_parquet
+          python get_ufl_game_stats.py --save_csv --save_parquet --save_json
 
       - uses: xresloader/upload-to-github-release@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: "schedule/*.*"
+          file: "rosters/current_rosters/*.*"
           branches: "main"
           #update_latest_release: true
           overwrite: true
           verbose: true
-          default_release_name: "UFL Schedule"
+          default_release_name: "UFL Rosters"
+      - uses: xresloader/upload-to-github-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: "game_stats/player/*.*"
+          branches: "main"
+          #update_latest_release: true
+          overwrite: true
+          verbose: true
+          default_release_name: "UFL Weekly Rosters"
