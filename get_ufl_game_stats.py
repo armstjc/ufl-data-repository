@@ -663,9 +663,7 @@ def fox_sports_player_stats_parser(
         )
         punting_df.loc[
             punting_df["punting_NO"] > 0, "punting_GROSS_YDS"
-        ] = int(
-            punting_df["punting_NO"] * punting_df["punting_AVG"]
-        )
+        ] = punting_df["punting_NO"] * punting_df["punting_AVG"]
 
     if len(passing_df) == 0 and rushing_df == 0:
         raise ValueError(
@@ -843,6 +841,7 @@ def get_ufl_game_stats(
     columns_order = [
         "season",
         "league",
+        "game_id",
         "team_id",
         "team_abv",
         "team_analytics_id",
@@ -920,6 +919,9 @@ def get_ufl_game_stats(
     stats_df = pd.DataFrame()
     stats_df_arr = []
 
+    team_stats_df = pd.DataFrame()
+    team_stats_df_arr = []
+
     schedule_df = pd.read_parquet(
         "https://github.com/armstjc/ufl-data-repository/releases/"
         + f"download/ufl-schedule/{season}_ufl_schedule.parquet"
@@ -933,6 +935,28 @@ def get_ufl_game_stats(
     ufl_game_id_arr = schedule_df["ufl_game_id"].to_numpy()
 
     for g_id in tqdm(ufl_game_id_arr):
+        # Team stat declarations, because the way FOX Sports
+        # stores this info is so cringe and bad,
+        # we have to populate these variables
+        # to make this code run fast.
+        away_time_of_possession = None
+        away_total_drives = None
+        away_total_plays = None
+        away_total_yards = None
+        away_yards_per_play = None
+        away_rz_td = None
+        away_rz_att = None
+        away_turnovers = None
+
+        home_time_of_possession = None
+        home_total_drives = None
+        home_total_plays = None
+        home_total_yards = None
+        home_yards_per_play = None
+        home_rz_td = None
+        home_rz_att = None
+        home_turnovers = None
+
         url = (
             "https://api.foxsports.com/bifrost/v1/ufl/event/"
             + f"{g_id}/data?apikey={fox_key}"
@@ -982,8 +1006,77 @@ def get_ufl_game_stats(
         for team in game_json["boxscore"]["boxscoreSections"]:
 
             if team["title"] == "MATCHUP" and parse_team_stats is True:
-                # This is team stats
+
+                for b in team["boxscoreMatchup"]:
+
+                    if b["title"] == "POSSESSION" or b["title"] == "TURNOVERS":
+                        # Yes, this is how nested team stats are.
+                        for r in b["rows"]:
+                            # "POSSESSION"
+                            if r["title"] == "Time Of Possession":
+                                away_time_of_possession = r["leftStat"]
+                                home_time_of_possession = r["rightStat"]
+
+                            elif r["title"] == "Total Drives":
+                                away_total_drives = r["leftStat"]
+                                home_total_drives = r["rightStat"]
+
+                            elif r["title"] == "Total Plays":
+                                away_total_plays = r["leftStat"]
+                                home_total_plays = r["rightStat"]
+
+                            elif r["title"] == "Total Yards":
+                                away_total_yards = r["leftStat"]
+                                home_total_yards = r["rightStat"]
+
+                            elif r["title"] == "Yards Per Play":
+                                away_yards_per_play = r["leftStat"]
+                                home_yards_per_play = r["rightStat"]
+
+                            elif r["title"] == "Red Zone TDs":
+                                away_rz_td = r["leftStat"]
+                                home_rz_td = r["rightStat"]
+
+                            elif r["title"] == "Red Zone Attempts":
+                                away_rz_att = r["leftStat"]
+                                home_rz_att = r["rightStat"]
+
+                            # "TURNOVERS"
+                            elif r["title"] == "Total Drives" \
+                                    and r["title"] == "Total":
+                                away_turnovers = r["leftStat"]
+                                home_turnovers = r["rightStat"]
+
+                temp_df = pd.DataFrame(
+                    {
+                        "season": season,
+                        "league": league_id,
+                        "team_id": [home_team_id, away_team_id],
+                        "game_id": [g_id, g_id],
+                        "time_of_possession": [
+                            home_time_of_possession,
+                            away_time_of_possession
+                        ],
+                        "total_drives": [home_total_drives, away_total_drives],
+                        "total_plays": [home_total_plays, away_total_plays],
+                        "total_yards": [home_total_yards, away_total_yards],
+                        "yards_per_play": [
+                            home_yards_per_play,
+                            away_yards_per_play
+                        ],
+                        "redzone_TDs": [home_rz_td, away_rz_td],
+                        "redzone_attempts": [home_rz_att, away_rz_att],
+                        "turnovers": [home_turnovers, away_turnovers]
+
+                    },
+                )
+                team_stats_df_arr.append(temp_df)
+
+                del temp_df
+
+            elif team["title"] == "MATCHUP" and parse_team_stats is False:
                 pass
+
             elif team["title"] == away_team_nickname:
                 # print(away_team_nickname)
                 temp_df = fox_sports_player_stats_parser(
@@ -999,7 +1092,7 @@ def get_ufl_game_stats(
                     temp_df["score"] = f"W {away_team_score}-{home_team_score}"
                 else:
                     temp_df["score"] = f"L {away_team_score}-{home_team_score}"
-
+                temp_df["game_id"] = g_id
                 stats_df_arr.append(temp_df)
 
                 del temp_df
@@ -1018,7 +1111,7 @@ def get_ufl_game_stats(
                     temp_df["score"] = f"W {home_team_score}-{away_team_score}"
                 else:
                     temp_df["score"] = f"L {home_team_score}-{away_team_score}"
-
+                temp_df["game_id"] = g_id
                 stats_df_arr.append(temp_df)
 
                 del temp_df
@@ -1032,7 +1125,83 @@ def get_ufl_game_stats(
     stats_df = pd.concat(stats_df_arr, ignore_index=True)
     stats_df["season"] = season
     stats_df["league"] = league_id
+    # stats_df["game_id"] =
     stats_df["last_updated"] = now
+
+    if parse_team_stats is True:
+        team_stats_df = pd.concat(
+            team_stats_df_arr,
+            ignore_index=True
+        )
+        # print(team_stats_df)
+        team_stats_sum = stats_df.groupby(
+            ["season", "league", "team_id", "game_id"], as_index=False
+        )[[
+            "passing_COMP",
+            "passing_ATT",
+            "passing_YDS",
+            "passing_TD",
+            "passing_INT",
+            "rushing_ATT",
+            "rushing_YDS",
+            "rushing_TD",
+            # "receiving_TGT",
+            # "receiving_REC",
+            # "receiving_YDS",
+            # "receiving_TD",
+            "fumbles_FUM",
+            "fumbles_FUM_LOST",
+            "defense_TAK",
+            "defense_SOLO",
+            "defense_AST",
+            "defense_TFL",
+            "defense_SACKS",
+            "defense_INT",
+            "defense_PD",
+            "defense_TD",
+            "defense_FF",
+            "defense_FR",
+            "kicking_FGM",
+            "kicking_FGA",
+            "punting_NO",
+            "punting_AVG",
+            "punting_IN_20",
+            "punting_TB",
+            "punting_BLK",
+            "kick_return_KR",
+            "kick_return_YDS",
+            # "kick_return_AVG",
+            "kick_return_TD",
+            "punt_return_PR",
+            "punt_return_YDS",
+            # "punt_return_AVG",
+            "punt_return_TD",
+        ]].sum()
+
+        team_stats_max = stats_df.groupby(
+            ["season", "league", "team_id", "game_id"],
+        )[[
+            "kicking_FG_LONG",
+            "rushing_LONG",
+            # "receiving_LONG",
+            "punting_LONG",
+            "kick_return_LONG",
+            "punt_return_LONG",
+        ]].max()
+
+        team_stats_df = team_stats_df.merge(
+            team_stats_sum,
+            how="outer",
+            on=["season", "league", "team_id", "game_id"]
+        )
+
+        team_stats_df = team_stats_df.merge(
+            team_stats_max,
+            how="outer",
+            on=["season", "league", "team_id", "game_id"]
+        )
+
+        # print(team_stats_df)
 
     # print(stats_df.columns)
     stats_df = stats_df[columns_order]
@@ -1043,11 +1212,21 @@ def get_ufl_game_stats(
             index=False
         )
 
+        if len(team_stats_df) > 0:
+            stats_df.to_csv(
+                f"game_stats/team/{season}_ufl_team_game_stats.csv",
+                index=False
+            )
     if save_parquet is True:
         stats_df.to_parquet(
             f"game_stats/player/{season}_ufl_player_game_stats.parquet",
             index=False
         )
+        if len(team_stats_df) > 0:
+            stats_df.to_parquet(
+                f"game_stats/team/{season}_ufl_team_game_stats.parquet",
+                index=False
+            )
 
 
 if __name__ == "__main__":

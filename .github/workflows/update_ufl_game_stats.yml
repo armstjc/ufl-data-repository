@@ -42,19 +42,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: "rosters/current_rosters/*.*"
+          file: "game_stats/team/*.*"
           branches: "main"
           #update_latest_release: true
           overwrite: true
           verbose: true
-          default_release_name: "UFL Rosters"
+          default_release_name: "UFL Team Game Stats"
       - uses: xresloader/upload-to-github-release@main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          file: "game_stats/player/*.*"
+          file: "game_stats/team/*.*"
           branches: "main"
           #update_latest_release: true
           overwrite: true
           verbose: true
-          default_release_name: "UFL Weekly Rosters"
+          default_release_name: "UFL Team Game Stats"

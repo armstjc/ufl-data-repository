@@ -6,8 +6,8 @@ Data repository that holds data for the United Football League (UFL), a football
 
 | Stat Type  | Status  | Data  | Data Guide  |
 | -- | -- | -- | -- |
-| Game Stats - Player | Indev  | Data  | Guide  |
-| Game Stats - Team  | Indev  | Data  | Guide  |
+| Game Stats - Player | [![Update UFL Game Stats](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_game_stats.yml/badge.svg)](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_game_stats.yml)  | [Data](https://github.com/armstjc/ufl-data-repository/releases/tag/ufl-player-game-stats)  | Guide  |
+| Game Stats - Team  | [![Update UFL Game Stats](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_game_stats.yml/badge.svg)](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_game_stats.yml)  | [Data](https://github.com/armstjc/ufl-data-repository/releases/tag/ufl-player-game-stats)  | Guide  |
 | Play-by-play (PBP)  | Not started  | Data  | Guide  |
 | Rosters  | [![Update UFL Rosters](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_rosters.yml/badge.svg)](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_rosters.yml)  | [Data](https://github.com/armstjc/ufl-data-repository/releases/tag/ufl-rosters)  | [Guide](https://github.com/armstjc/ufl-data-repository/blob/ufl-rosters/rosters/rosters.md)  |
 | Weekly Rosters  | [![Update UFL Rosters](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_rosters.yml/badge.svg)](https://github.com/armstjc/ufl-data-repository/actions/workflows/update_ufl_rosters.yml)  | [Data](https://github.com/armstjc/ufl-data-repository/releases/tag/ufl-weekly-rosters)  | [Guide](https://github.com/armstjc/ufl-data-repository/blob/ufl-rosters/rosters/rosters.md)  |
