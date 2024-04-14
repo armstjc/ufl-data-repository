@@ -1,6 +1,6 @@
 """
 # Creation Date: 04/01/2024 03:00 PM EDT
-# Last Updated Date: 04/03/2024 01:35 AM EDT
+# Last Updated Date: 04/04/2024 03:35 PM EDT
 # Author: Joseph Armstrong (armstrongjoseph08@gmail.com)
 # File Name: get_ufl_schedules.py
 # Purpose: Allows one to get UFL schedule data.
