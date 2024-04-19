@@ -1,6 +1,6 @@
 """
 # Creation Date: 03/30/2024 10:01 AM EDT
-# Last Updated Date: 03/31/2024 03:40 PM EDT
+# Last Updated Date: 04/19/2024 05:13 PM EDT
 # Author: Joseph Armstrong (armstrongjoseph08@gmail.com)
 # File Name: get_ufl_rosters.py
 # Purpose: Allows one to get UFL roster data.
@@ -134,9 +134,15 @@ def ufl_roster_data(
                         "columns"][0]["imageUrl"]
                     temp_df["position"] = player["columns"][1]["text"]
                     try:
-                        temp_df["player_age"] = int(player["columns"][2]["text"])
-                    except:
+                        temp_df["player_age"] = int(
+                            player["columns"][2]["text"]
+                        )
+                    except Exception as e:
+                        logging.info(
+                            f"Unhandled exception `{e}`"
+                        )
                         temp_df["player_age"] = None
+
                     temp_df["player_height_ft_in"] = player[
                         "columns"][3]["text"]
                     temp_df["player_weight"] = int(

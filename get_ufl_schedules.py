@@ -1,6 +1,6 @@
 """
 # Creation Date: 03/30/2024 03:41 PM EDT
-# Last Updated Date: 04/01/2024 01:16 AM EDT
+# Last Updated Date: 04/19/2024 05:13 PM EDT
 # Author: Joseph Armstrong (armstrongjoseph08@gmail.com)
 # File Name: get_ufl_schedules.py
 # Purpose: Allows one to get UFL schedule data.
@@ -165,10 +165,11 @@ def get_ufl_schedules(
                         temp_df["home_team_id"] = None
                         temp_df["home_team_analytics_name"] = None
                         temp_df["home_team_name"] = "TBD"
-                    
+
                     try:
                         if game["columns"][3]["subtext"] != "FINAL":
-                            temp_df["scheduled_date"] = game["columns"][3]["text"]
+                            temp_df["scheduled_date"] = game[
+                                "columns"][3]["text"]
                             temp_df["broadcast_network"] = game[
                                 "columns"][3]["subtext"]
                         else:
