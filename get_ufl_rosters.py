@@ -133,7 +133,10 @@ def ufl_roster_data(
                     temp_df["player_headshot"] = player[
                         "columns"][0]["imageUrl"]
                     temp_df["position"] = player["columns"][1]["text"]
-                    temp_df["player_age"] = int(player["columns"][2]["text"])
+                    try:
+                        temp_df["player_age"] = int(player["columns"][2]["text"])
+                    except:
+                        temp_df["player_age"] = None
                     temp_df["player_height_ft_in"] = player[
                         "columns"][3]["text"]
                     temp_df["player_weight"] = int(

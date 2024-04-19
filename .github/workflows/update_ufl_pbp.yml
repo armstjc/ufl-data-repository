@@ -1,4 +1,4 @@
-name: Update UFL Rosters
+name: Update UFL PBP
 on:
   schedule:
     - cron: "0,30 0-2,8-23 * 3-6 0,6"
