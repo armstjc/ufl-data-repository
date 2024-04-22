@@ -1067,6 +1067,46 @@ def parser(
                         del tacklers_temp
                         del int_ret_end
                         del int_ret_end_temp
+                    elif "pushed out of bounds" in desc.lower():
+                        check = re.findall(
+                            r"Pushed out of bounds by " +
+                            r"([a-zA-Z\'\-\s\,\.\;]+) at " +
+                            r"([a-zA-Z]+\s[0-9]+|" +
+                            r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\.",
+                            desc
+                        )
+                        tacklers_temp = check[0][0]
+                        int_ret_end_temp = check[0][1]
+
+                        if ";" in tacklers_temp:
+                            is_assist_tackle = 1
+                            tackle_with_assist = 1
+                            assist_tackle_3_team = posteam
+                            assist_tackle_4_team = posteam
+                            assist_tackle_3_player_name, \
+                                assist_tackle_4_player_name = \
+                                tacklers_temp.split("; ")
+                        elif "," in tacklers_temp:
+                            is_assist_tackle = 1
+                            tackle_with_assist = 1
+                            assist_tackle_3_team = posteam
+                            assist_tackle_4_team = posteam
+                            assist_tackle_3_player_name, \
+                                assist_tackle_4_player_name = \
+                                tacklers_temp.split(", ")
+                        else:
+                            is_solo_tackle = 1
+                            solo_tackle_2_team = posteam
+                            solo_tackle_2_player_name = tacklers_temp
+
+                        int_ret_end = get_yardline(
+                            int_ret_end_temp,
+                            posteam
+                        )
+                        return_yards = int_ret_end - int_ret_start
+                        del tacklers_temp
+                        del int_ret_end
+                        del int_ret_end_temp
                     elif "ran out of bounds" in desc.lower():
                         # Edge case found in Game ID #9
                         return_yards = 0
@@ -1136,27 +1176,12 @@ def parser(
                     del check
 
                 if "rush" in desc.lower() \
-                        and "rushed to" in desc.lower() \
-                        and "-point conversion " not in desc.lower():
-                    check = re.findall(
-                        r"([a-zA-Z]\.[a-zA-Z\'\-]+) rushed to " +
-                        r"([a-zA-Z]+\s[0-9]+|" +
-                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+) for " +
-                        r"([0-9\-]+) yards.",
-                        desc
-                    )
-                    rusher_player_name = check[0][0]
-                    rushing_yards = 0
-                    if "touchdown" in desc.lower() \
-                            and "fumble" not in desc.lower():
-                        is_rush_touchdown = 1
-                elif "rush" in desc.lower() \
                         and "for yards." in desc.lower() \
                         and "up the middle" not in desc.lower() \
                         and "-point conversion " not in desc.lower():
                     check = re.findall(
-                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) rushed " +
-                        r"([a-zA-Z]+) ([a-zA-Z]+) to " +
+                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) rushed" +
+                        r"( [a-zA-Z]+)?( [a-zA-Z]+)? to " +
                         r"([a-zA-Z]+\s[0-9]+|" +
                         r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+) for " +
                         r"yards.",
@@ -1189,8 +1214,8 @@ def parser(
                         and "-point conversion " not in desc.lower():
 
                     check = re.findall(
-                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) rushed " +
-                        r"([a-zA-Z]+) ([a-zA-Z]+) to " +
+                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) rushed" +
+                        r"( [a-zA-Z]+)?( [a-zA-Z]+)? to " +
                         r"([a-zA-Z]+\s[0-9]+|" +
                         r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+) for " +
                         r"([0-9\-]+) yards.",
@@ -1405,7 +1430,8 @@ def parser(
                         is_punt_inside_twenty = 1
 
                     if "tackled by" in desc.lower() \
-                            and "muff" not in desc.lower():
+                            and "muff" not in desc.lower() \
+                            and "fumble" not in desc.lower():
                         check = re.findall(
                             r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) " +
                             r"returned punt from " +
@@ -1461,9 +1487,9 @@ def parser(
                             solo_tackle_1_player_name = tacklers_temp
 
                         del check
-
                     elif "pushed out" in desc.lower() \
-                            and "muff" not in desc.lower():
+                            and "muff" not in desc.lower() \
+                            and "fumble" not in desc.lower():
                         check = re.findall(
                             r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) " +
                             r"returned punt from the " +
@@ -1694,7 +1720,7 @@ def parser(
                         and "pushed out of bounds" not in desc.lower():
                     check = re.findall(
                         r"([[a-zA-Z\'\.\-\s]+) FUMBLES, forced by " +
-                        r"([[a-zA-Z\'\.\-\s]+), out of bounds.",
+                        r"([[a-zA-Z\'\.\-\s]+). [oO]ut of bounds.",
                         desc
                     )
 
