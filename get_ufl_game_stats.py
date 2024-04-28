@@ -428,7 +428,12 @@ def fox_sports_player_stats_parser(
                 )
                 temp_df["kicking_FG"] = player["columns"][1]["text"]
                 temp_df["kicking_FG%"] = player["columns"][2]["text"]
-                temp_df["kicking_FG_LONG"] = int(player["columns"][3]["text"])
+                try:
+                    temp_df["kicking_FG_LONG"] = int(
+                        player["columns"][3]["text"]
+                    )
+                except Exception:
+                    temp_df["kicking_FG_LONG"] = 0
                 kicking_df_arr.append(temp_df)
 
                 del temp_df

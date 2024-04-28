@@ -98,10 +98,10 @@ def ufl_roster_data(
     # Get the current week for these rosters
     schedule_df = pd.read_parquet(
         "https://github.com/armstjc/ufl-data-repository/releases/download/"
-        + f"ufl-standings/{season}_ufl_standings.parquet"
+        + f"ufl-schedule/{season}_ufl_schedule.parquet"
     )
-
-    current_week = int(schedule_df["week"].max())
+    schedule_df = schedule_df[schedule_df["home_score"] > 0]
+    current_week = int(schedule_df["week_num"].max())
     # Doing this so the rosters are always up to date
     # with the current week.
     current_week += 1

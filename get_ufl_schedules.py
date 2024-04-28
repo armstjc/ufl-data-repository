@@ -59,6 +59,7 @@ def get_ufl_schedules(
     columns_order = [
         "season",
         "season_type",
+        "week_num",
         "week_id",
         "week_title",
         "ufl_game_id",
@@ -76,7 +77,7 @@ def get_ufl_schedules(
         "fox_bet_odds",
         "scheduled_date",
         "broadcast_network",
-        "last_updated"
+        "last_updated",
     ]
 
     headers = {
@@ -119,6 +120,13 @@ def get_ufl_schedules(
             week_id = week["id"]
             week_title = week["title"]
 
+            _, week_num, sea_sec = week_id.split("-")
+
+            sea_sec = int(sea_sec)
+            week_num = int(week_num)
+            if sea_sec == 2:
+                week_num += 10
+
             week_url = week["uri"]
             week_url = f"{week_url}?apikey={fox_key}"
             response = requests.get(week_url, headers=headers)
@@ -136,31 +144,36 @@ def get_ufl_schedules(
                             "season_type": season_type,
                             "season": season,
                             "week_title": week_title,
+                            "week_num": week_num,
                             "game_date": game_date,
                         },
                         index=[0],
                     )
                     try:
-                        temp_df["away_team_id"] = game[
-                            "linkList"
-                        ][0]["entityLink"]["layout"]["tokens"]["id"]
-                        temp_df["away_team_analytics_name"] = game[
-                            "linkList"][0]["entityLink"]["analyticsName"]
-                        temp_df["away_team_name"] = game[
-                            "linkList"][0]["entityLink"]["title"].title()
+                        temp_df["away_team_id"] = game["linkList"][
+                            0
+                        ]["entityLink"]["layout"]["tokens"]["id"]
+                        temp_df["away_team_analytics_name"] = game["linkList"][
+                            0
+                        ]["entityLink"]["analyticsName"]
+                        temp_df["away_team_name"] = game["linkList"][
+                            0
+                        ]["entityLink"]["title"].title()
                     except Exception:
                         temp_df["away_team_id"] = None
                         temp_df["away_team_analytics_name"] = None
                         temp_df["away_team_name"] = "TBD"
 
                     try:
-                        temp_df["home_team_id"] = game[
-                            "linkList"
-                        ][1]["entityLink"]["layout"]["tokens"]["id"]
-                        temp_df["home_team_analytics_name"] = game[
-                            "linkList"][1]["entityLink"]["analyticsName"]
-                        temp_df["home_team_name"] = game[
-                            "linkList"][1]["entityLink"]["title"].title()
+                        temp_df["home_team_id"] = game["linkList"][
+                            1
+                        ]["entityLink"]["layout"]["tokens"]["id"]
+                        temp_df["home_team_analytics_name"] = game["linkList"][
+                            1
+                        ]["entityLink"]["analyticsName"]
+                        temp_df["home_team_name"] = game["linkList"][
+                            1
+                        ]["entityLink"]["title"].title()
                     except Exception:
                         temp_df["home_team_id"] = None
                         temp_df["home_team_analytics_name"] = None
@@ -168,10 +181,12 @@ def get_ufl_schedules(
 
                     try:
                         if game["columns"][3]["subtext"] != "FINAL":
-                            temp_df["scheduled_date"] = game[
-                                "columns"][3]["text"]
-                            temp_df["broadcast_network"] = game[
-                                "columns"][3]["subtext"]
+                            temp_df["scheduled_date"] = game["columns"][
+                                3
+                            ]["text"]
+                            temp_df["broadcast_network"] = game["columns"][
+                                3
+                            ]["subtext"]
                         else:
                             score = game["columns"][3]["text"]
                             away_score, home_score = score.split("-")
@@ -189,8 +204,9 @@ def get_ufl_schedules(
                     except Exception:
                         temp_df["fox_bet_odds"] = None
 
-                    temp_df["ufl_game_id"] = game[
-                        "linkList"][2]["entityLink"]["layout"]["tokens"]["id"]
+                    temp_df["ufl_game_id"] = game["linkList"][2]["entityLink"][
+                        "layout"
+                    ]["tokens"]["id"]
 
                     schedule_df_arr.append(temp_df)
                     del temp_df
@@ -218,10 +234,14 @@ if __name__ == "__main__":
     parser = ArgumentParser()
 
     parser.add_argument(
-        "--save_csv", default=False, action=BooleanOptionalAction
+        "--save_csv",
+        default=False,
+        action=BooleanOptionalAction
     )
     parser.add_argument(
-        "--save_parquet", default=False, action=BooleanOptionalAction
+        "--save_parquet",
+        default=False,
+        action=BooleanOptionalAction
     )
 
     args = parser.parse_args()

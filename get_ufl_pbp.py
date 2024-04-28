@@ -1353,7 +1353,7 @@ def parser(
                     # someone punts twice in one play.
                     # This is to catch that edge case.
                     check = re.findall(
-                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) punts " +
+                        r"([a-zA-Z\'\-\s]+) punts " +
                         r"yards to ([a-zA-Z]+\s[0-9]+|" +
                         r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)",
                         desc
