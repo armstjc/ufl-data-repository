@@ -317,7 +317,7 @@ def parser(
                 try:
                     down_and_distance_temp = play["title"]
                 except Exception:
-                    down_and_distance_temp = None
+                    down_and_distance_temp = ""
                 down = 0
                 yds_to_go = 0
 
@@ -552,6 +552,8 @@ def parser(
                 elif "aborted" in desc.lower():
                     play_type = "rush"
                     is_scrimmage_play = 1
+                elif "penalty" in desc.lower():
+                    play_type = "no_play"
                 else:
                     raise ValueError(
                         f"Unhandled play `{desc}`"
