@@ -806,14 +806,19 @@ def parser(
                             r"pass incomplete " +
                             r"([a-zA-Z]+) ([a-zA-Z]+)? " +
                             r"intended for( [a-zA-Z].[a-zA-Z\'\-]+)? " +
-                            r"\(([a-zA-Z\'\.\,\-\s]+)\).",
+                            r"(\(([a-zA-Z\'\.\,\-\s]+)\))?.",
                             desc
                         )
                         passer_player_name = check[0][0]
                         receiver_player_name = check[0][3]
-                        pd_temp = check[0][4]
+                        try:
+                            pd_temp = check[0][4]
+                        except Exception:
+                            pd_temp = ""
 
-                        if "," in pd_temp:
+                        if pd_temp == "":
+                            pass
+                        elif "," in pd_temp:
                             pass_defense_1_player_name, \
                                 pass_defense_2_player_name = pd_temp.split(
                                     ","
@@ -1917,6 +1922,8 @@ def parser(
 
                         del fum_end_temp
                         del fum_end
+                    elif "tackled by at " in desc.lower():
+                        pass
                     elif "tackled" in desc.lower():
                         check = re.findall(
                             r"Tackled by ([[a-zA-Z\'\.\-\s]+) at " +
