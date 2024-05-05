@@ -693,13 +693,18 @@ def parser(
                 if "field goal" in desc.lower():
                     is_field_goal_attempt = 1
                     check = re.findall(
-                            r"([a-zA-Z]+\.[a-zA-Z]+) (\d\d) " +
+                            r"([a-zA-Z]+\.[a-zA-Z]+)( \d\d)? " +
                             r"yard field goal attempt is ([a-zA-Z\s]+),",
                             desc
                         )
                     kicker_player_name = check[0][0]
-                    kick_distance = int(check[0][1])
-                    field_goal_result = check[0][2].lower()
+                    try:
+                        kick_distance = int(check[0][1])
+                        field_goal_result = check[0][2].lower()
+                    except Exception:
+                        kick_distance = None
+                        field_goal_result = check[0][1].lower()
+
                     if field_goal_result == "good":
                         drive_ended_with_score = 1
                     del check
@@ -1153,7 +1158,7 @@ def parser(
                         r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) sacked at " +
                         r"([a-zA-Z]+\s[0-9]+|" +
                         r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+) for " +
-                        r"([0-9\-]+) yards \(([a-zA-Z\;\s\.\']+)\)",
+                        r"([0-9\-]+) yards \(([a-zA-Z\;\s\.\'\-]+)\)",
                         desc
                     )
                     passer_player_name = check[0][0]
