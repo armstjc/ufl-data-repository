@@ -37,6 +37,7 @@ jobs:
           FOX_API_TOKEN: ${{ secrets.FOX_API_TOKEN}}
         run: |
           python get_ufl_game_stats.py --save_csv --save_parquet --save_json
+          python parse_ufl_season_stats.py
 
       - uses: xresloader/upload-to-github-release@main
         env:
@@ -58,3 +59,24 @@ jobs:
           overwrite: true
           verbose: true
           default_release_name: "UFL Team Game Stats"
+      - uses: xresloader/upload-to-github-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: "season_stats/player/*.*"
+          branches: "main"
+          #update_latest_release: true
+          overwrite: true
+          verbose: true
+          default_release_name: "UFL Player Season Stats"
+      - uses: xresloader/upload-to-github-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: "season_stats/team/*.*"
+          branches: "main"
+          #update_latest_release: true
+          overwrite: true
+          verbose: true
+          default_release_name: "UFL Team Season Stats"
+

@@ -1,6 +1,6 @@
 """
 # Creation Date: 04/01/2024 03:00 PM EDT
-# Last Updated Date: 04/04/2024 03:35 PM EDT
+# Last Updated Date: 05/17/2024 06:45 PM EDT
 # Author: Joseph Armstrong (armstrongjoseph08@gmail.com)
 # File Name: get_ufl_schedules.py
 # Purpose: Allows one to get UFL schedule data.
@@ -91,6 +91,7 @@ def fox_sports_player_stats_parser(
         "kicking_FG_LONG",
         # Punting
         "punting_NO",
+        "punting_GROSS_YDS",
         "punting_AVG",
         "punting_IN_20",
         "punting_TB",
@@ -151,10 +152,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -190,10 +188,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -227,11 +222,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
-
+                player_name = player["entityLink"]["title"]
                 temp_df = pd.DataFrame(
                     {
                         "team_id": team_id,
@@ -264,10 +255,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -301,10 +289,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -337,10 +322,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -373,10 +355,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -409,10 +388,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -446,10 +422,7 @@ def fox_sports_player_stats_parser(
 
                 player_id = player["entityLink"]["layout"]["tokens"]["id"]
 
-                try:
-                    player_name = player["entityLink"]["imageAltText"]
-                except Exception:
-                    player_name = player["entityLink"]["title"]
+                player_name = player["entityLink"]["title"]
 
                 temp_df = pd.DataFrame(
                     {
@@ -492,7 +465,7 @@ def fox_sports_player_stats_parser(
             {
                 "passing_COMP": "uint16",
                 "passing_ATT": "uint16",
-                "passing_YDS": "uint16",
+                "passing_YDS": "int16",
                 "passing_TD": "uint16",
                 "passing_INT": "uint16",
             }
@@ -535,9 +508,9 @@ def fox_sports_player_stats_parser(
         rushing_df = rushing_df.astype(
             {
                 "rushing_ATT": "uint16",
-                "rushing_YDS": "uint16",
+                "rushing_YDS": "int16",
                 "rushing_TD": "uint16",
-                "rushing_LONG": "uint16",
+                "rushing_LONG": "int16",
             }
         )
 
@@ -552,9 +525,9 @@ def fox_sports_player_stats_parser(
         receiving_df = receiving_df.astype(
             {
                 "receiving_REC": "uint16",
-                "receiving_YDS": "uint16",
+                "receiving_YDS": "int16",
                 "receiving_TD": "uint16",
-                "receiving_LONG": "uint16",
+                "receiving_LONG": "int16",
                 "receiving_TGT": "uint16",
             }
         )
@@ -596,9 +569,9 @@ def fox_sports_player_stats_parser(
         kick_return_df = kick_return_df.astype(
             {
                 "kick_return_KR": "uint16",
-                "kick_return_YDS": "uint16",
-                "kick_return_LONG": "uint16",
-                "kick_return_TD": "uint16",
+                "kick_return_YDS": "int16",
+                "kick_return_LONG": "int16",
+                "kick_return_TD": "int16",
             }
         )
         kick_return_df.loc[
@@ -617,9 +590,9 @@ def fox_sports_player_stats_parser(
         punt_return_df = punt_return_df.astype(
             {
                 "punt_return_PR": "uint16",
-                "punt_return_YDS": "uint16",
-                "punt_return_LONG": "uint16",
-                "punt_return_TD": "uint16",
+                "punt_return_YDS": "int16",
+                "punt_return_LONG": "int16",
+                "punt_return_TD": "int16",
             }
         )
         punt_return_df.loc[
@@ -670,6 +643,8 @@ def fox_sports_player_stats_parser(
             punting_df["punting_NO"] > 0, "punting_GROSS_YDS"
         ] = punting_df["punting_NO"] * punting_df["punting_AVG"]
 
+        punting_df = punting_df.round({"punting_GROSS_YDS": 0})
+        # punting_df = punting_df.round({"punting_GROSS_YDS": 0})
     if len(passing_df) == 0 and rushing_df == 0:
         raise ValueError(
             "There isn't enough data here to make it worth " +
@@ -896,6 +871,7 @@ def get_ufl_game_stats(
         "kicking_FG%",
         "kicking_FG_LONG",
         "punting_NO",
+        "punting_GROSS_YDS",
         "punting_AVG",
         "punting_IN_20",
         "punting_TB",
@@ -952,6 +928,8 @@ def get_ufl_game_stats(
         away_rz_td = None
         away_rz_att = None
         away_turnovers = None
+        # away_fum_lost = None
+        # away_interceptions = None
 
         home_time_of_possession = None
         home_total_drives = None
@@ -961,6 +939,8 @@ def get_ufl_game_stats(
         home_rz_td = None
         home_rz_att = None
         home_turnovers = None
+        # home_fum_lost = None
+        # home_interceptions = None
 
         url = (
             "https://api.foxsports.com/bifrost/v1/ufl/event/"
@@ -1047,11 +1027,15 @@ def get_ufl_game_stats(
                                 home_rz_att = r["rightStat"]
 
                             # "TURNOVERS"
-                            elif r["title"] == "Total Drives" \
-                                    and r["title"] == "Total":
+                            elif r["title"] == "Total":
                                 away_turnovers = r["leftStat"]
                                 home_turnovers = r["rightStat"]
-
+                            # elif r["title"] == "Fumbles Lost":
+                            #     away_fum_lost = r["leftStat"]
+                            #     home_fum_lost = r["rightStat"]
+                            # elif r["title"] == "Interceptions":
+                            #     away_interceptions = r["leftStat"]
+                            #     home_interceptions = r["rightStat"]
                 temp_df = pd.DataFrame(
                     {
                         "season": season,
@@ -1169,6 +1153,7 @@ def get_ufl_game_stats(
             "kicking_FGM",
             "kicking_FGA",
             "punting_NO",
+            "punting_GROSS_YDS",
             "punting_AVG",
             "punting_IN_20",
             "punting_TB",
@@ -1218,7 +1203,7 @@ def get_ufl_game_stats(
         )
 
         if len(team_stats_df) > 0:
-            stats_df.to_csv(
+            team_stats_df.to_csv(
                 f"game_stats/team/{season}_ufl_team_game_stats.csv",
                 index=False
             )
@@ -1228,7 +1213,7 @@ def get_ufl_game_stats(
             index=False
         )
         if len(team_stats_df) > 0:
-            stats_df.to_parquet(
+            team_stats_df.to_parquet(
                 f"game_stats/team/{season}_ufl_team_game_stats.parquet",
                 index=False
             )

@@ -1,6 +1,6 @@
 """
 # Creation Date: 04/01/2024 03:00 PM EDT
-# Last Updated Date: 04/19/2024 05:13 PM EDT
+# Last Updated Date: 05/17/2024 06:45 PM EDT
 # Author: Joseph Armstrong (armstrongjoseph08@gmail.com)
 # File Name: get_ufl_schedules.py
 # Purpose: Allows one to get UFL play-by-play (PBP) data.
@@ -12,6 +12,7 @@ import logging
 import re
 from argparse import ArgumentParser, BooleanOptionalAction
 from datetime import UTC, datetime
+from glob import glob
 
 # from os import mkdir
 # import time
@@ -19,7 +20,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from utils import get_fox_api_key
+from utils import get_fox_api_key, format_folder_path
 
 
 def get_yardline(yardline, posteam):
@@ -143,7 +144,11 @@ def parser(
             drive_id = drive["id"]
             fixed_drive_result = drive["title"]
             drive_desc = drive["subtitle"]
-            drive_desc = drive_desc.split(" · ")
+
+            if " · " in drive_desc:
+                drive_desc = drive_desc.split(" · ")
+            elif " Â· " in drive_desc:
+                drive_desc = drive_desc.split(" Â· ")
             print(drive_desc)
             drive_play_count = int(drive_desc[0].replace(" plays", ""))
             # drive_yards = int(drive_desc[1].replace(" yards", ""))
@@ -554,6 +559,12 @@ def parser(
                     is_scrimmage_play = 1
                 elif "penalty" in desc.lower():
                     play_type = "no_play"
+                elif "extra point" in desc.lower():
+                    play_type
+                    is_special_teams_play = 1
+                    play_type = "extra_point"
+                elif "timeout the replay official" in desc.lower():
+                    play_type = "no_play"
                 else:
                     raise ValueError(
                         f"Unhandled play `{desc}`"
@@ -591,6 +602,17 @@ def parser(
                     is_fumble = 1
                 elif play_type == "run" \
                         and "-point attempt" in desc.lower():
+                    run_location = ""
+                    run_gap = ""
+                elif play_type == "run" and "rushed to" in desc.lower():
+                    run_location = ""
+                    run_gap = ""
+                elif play_type == "run" \
+                        and "rushed reverse to" in desc.lower():
+                    run_location = ""
+                    run_gap = ""
+                elif play_type == "run" \
+                        and "scrambles to" in desc.lower():
                     run_location = ""
                     run_gap = ""
                 elif play_type == "run":
@@ -641,6 +663,19 @@ def parser(
                     is_replay_or_challenge = 1
                 elif play_type == "pass" \
                         and "pass complete to" in desc.lower():
+                    pass_length = ""
+                    pass_location = ""
+                elif play_type == "pass" \
+                        and "pass incomplete intended for" in desc.lower():
+                    pass_length = ""
+                    pass_location = ""
+                elif play_type == "pass" \
+                        and "middle intended" in desc.lower():
+                    pass_length = "middle"
+                    pass_location = ""
+                elif play_type == "pass" \
+                        and "rushed backward pass" in desc.lower():
+                    play_type = "run"
                     pass_length = ""
                     pass_location = ""
                 elif play_type == "pass":
@@ -775,8 +810,8 @@ def parser(
                             desc
                         )
                         passer_player_name = check[0][0]
-                        receiver_player_name = check[0][3]
-                        pd_temp = check[0][4]
+                        receiver_player_name = check[0][1]
+                        pd_temp = check[0][2]
 
                         if "," in pd_temp:
                             pass_defense_1_player_name, \
@@ -793,9 +828,12 @@ def parser(
 
                     del check
                 elif "pass" in desc.lower() \
-                        and "incomplete" in desc.lower():
+                        and "incomplete" in desc.lower()\
+                        and "steps back to pass. pass incomplete" \
+                            in desc.lower():
                     check = re.findall(
-                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) pass incomplete " +
+                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) " +
+                        r"steps back to pass. pass incomplete " +
                         r"([a-zA-Z]+) ([a-zA-Z]+)? " +
                         r"intended for( [a-zA-Z].[a-zA-Z\'\-]+)?.",
                         desc
@@ -808,10 +846,55 @@ def parser(
                             and "sack" not in desc.lower():
                         check = re.findall(
                             r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) " +
-                            r"pass incomplete " +
+                            r"steps back to pass. pass incomplete " +
                             r"([a-zA-Z]+) ([a-zA-Z]+)? " +
                             r"intended for( [a-zA-Z].[a-zA-Z\'\-]+)? " +
                             r"(\(([a-zA-Z\'\.\,\-\s]+)\))?.",
+                            desc
+                        )
+                        passer_player_name = check[0][0]
+                        receiver_player_name = check[0][3]
+                        try:
+                            pd_temp = check[0][4]
+                        except Exception:
+                            pd_temp = ""
+
+                        if pd_temp == "":
+                            pass
+                        elif "," in pd_temp:
+                            pass_defense_1_player_name, \
+                                pass_defense_2_player_name = pd_temp.split(
+                                    ","
+                                )
+                        elif ";" in pd_temp:
+                            pass_defense_1_player_name, \
+                                pass_defense_2_player_name = pd_temp.split(
+                                    ";"
+                                )
+                        else:
+                            pass_defense_1_player_name = pd_temp
+
+                    del check
+                elif "pass" in desc.lower() \
+                        and "incomplete" in desc.lower():
+                    check = re.findall(
+                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) pass incomplete" +
+                        r"( [a-zA-Z]+)( [a-zA-Z]+)? " +
+                        r"intended for( [a-zA-Z].[a-zA-Z\'\-]+)?.",
+                        desc
+                    )
+                    passer_player_name = check[0][0]
+                    receiver_player_name = check[0][3]
+                    is_incomplete_pass = 1
+
+                    if (("(" in desc.lower()) or (")" in desc.lower())) \
+                            and "sack" not in desc.lower():
+                        check = re.findall(
+                            r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) " +
+                            r"pass incomplete" +
+                            r"( [a-zA-Z]+)?( [a-zA-Z]+)? " +
+                            r"intended for( [a-zA-Z].[a-zA-Z\'\-]+)?" +
+                            r"( \(([a-zA-Z\'\.\,\-\s]+)\))?.",
                             desc
                         )
                         passer_player_name = check[0][0]
@@ -949,11 +1032,11 @@ def parser(
                 elif "pass" in desc.lower() and "complete" in desc.lower():
                     is_complete_pass = 1
                     check = re.findall(
-                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) pass " +
-                        r"([a-zA-Z]+) ([a-zA-Z]+) complete to " +
+                        r"([a-zA-Z][a-zA-Z\.\'\-\s]+) pass" +
+                        r"( [a-zA-Z]+)?( [a-zA-Z]+)? complete to " +
                         r"([a-zA-Z]+\s[0-9]+|" +
                         r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+). " +
-                        r"Catch made by ([a-zA-Z]\.[a-zA-Z\'\-\s]+) at " +
+                        r"Catch made by ([a-zA-Z\.\'\-\s]+) at " +
                         r"([a-zA-Z]+\s[0-9]+|" +
                         r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+). " +
                         r"Gain of( -?[0-9]+)? yards",
@@ -1040,6 +1123,10 @@ def parser(
                         return_yards = 100 - int_ret_start
                     elif "touchback" in desc.lower():
                         return_yards = 0 - int_ret_start
+                    elif "tackled by at" in desc.lower():
+                        # This means there is no designated tackler
+                        # for this play for some reason.
+                        pass
                     elif "tackled by" in desc.lower():
                         check = re.findall(
                             r"Tackled by ([a-zA-Z\'\-\s\,\.\;]+) at " +
@@ -1126,13 +1213,14 @@ def parser(
 
                         pass
                         logging.warning(
-                            f"Unusual play `{desc}`\nDouble check play for unusual outcomes."
+                            f"Unusual play `{desc}`\n" +
+                            "Double check play for unusual outcomes."
                         )
                     del int_ret_start
                     del int_ret_start_temp
                 elif "pass" in desc.lower() \
                         and "sack" in desc.lower() \
-                        and "for yards" in desc.lower():
+                        and "for yards " in desc.lower():
                     is_sack = 1
                     check = re.findall(
                         r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) sacked at " +
@@ -1153,7 +1241,6 @@ def parser(
                             = sack_temp.split(", ")
                     else:
                         sack_player_name = sack_temp
-
                 elif "pass" in desc.lower() and "sack" in desc.lower():
                     is_sack = 1
                     check = re.findall(
@@ -1178,17 +1265,9 @@ def parser(
                         sack_player_name = sack_temp
 
                 if "touchdown" in desc.lower() \
-                        and "interception" not in desc.lower():
-                    is_touchdown = 1
-                    check = re.findall(
-                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) " +
-                        r"for( [0-9]+)? yards, TOUCHDOWN.",
-                        desc
-                    )
-                    td_player_name = check[0][0]
-
-                    del check
-
+                        and "Gain of yards. for yards, TOUCHDOWN." \
+                            in desc.lower():
+                    pass
                 if "rush" in desc.lower() \
                         and "for yards." in desc.lower() \
                         and "up the middle" not in desc.lower() \
@@ -1452,7 +1531,7 @@ def parser(
                             r"the ([a-zA-Z]+\s[0-9]+|" +
                             r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+). " +
                             r"Tackled by " +
-                            r"([a-zA-Z]\.[a-zA-Z\'\-\s\,\.\;]+) at " +
+                            r"([a-zA-Z\'\-\s\,\.\;]+) at " +
                             r"([a-zA-Z]+\s[0-9]+|" +
                             r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+).",
                             desc
@@ -1510,7 +1589,7 @@ def parser(
                             r"([a-zA-Z]+\s[0-9]+|" +
                             r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+). " +
                             r"Pushed out of bounds by " +
-                            r"([a-zA-Z]\.[a-zA-Z\'\-\s\,\.\;]+) at " +
+                            r"([a-zA-Z\'\-\s\,\.\;]+) at " +
                             r"([a-zA-Z]+\s[0-9]+|" +
                             r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+).",
                             desc
@@ -1648,7 +1727,76 @@ def parser(
                         solo_tackle_1_team = defteam
                         solo_tackle_1_player_name = tacklers_temp
 
-                if play_type == "kickoff":
+                if play_type == "kickoff" \
+                        and "kicks yards from " in desc.lower():
+                    check = re.findall(
+                        r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) kicks yards from " +
+                        r"([a-zA-Z]+\s[0-9]+|" +
+                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+) to the " +
+                        r"([a-zA-Z]+\s[0-9]+|" +
+                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+).",
+                        desc
+                    )
+                    kicker_player_name = check[0][0]
+                    return_loc_start_temp = check[0][1]
+                    return_team = posteam
+
+                    if "out of bounds" in desc.lower():
+                        is_kickoff_out_of_bounds = 1
+
+                    if "fair catch" in desc.lower():
+                        check = re.findall(
+                            r"Fair catch by ([a-zA-Z]\.[a-zA-Z\'\-\s]+).",
+                            desc
+                        )
+
+                        kickoff_returner_player_name = check[0][0]
+                        is_kickoff_fair_catch = 1
+                    if "touchback" in desc.lower():
+                        is_kickoff_in_endzone = 1
+
+                    if "downed" in desc.lower():
+                        is_kickoff_downed = 1
+
+                    if "returns the kickoff" in desc.lower():
+                        check = re.findall(
+                            r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) " +
+                            r"returns the kickoff\.",
+                            desc
+                        )
+                        if "tackled by at" in desc.lower():
+                            # edge case found in game ID #3,
+                            # where it says someone made a tackle,
+                            # but there's no player named for the tackle.
+                            pass
+                        elif "tackled by" in desc.lower():
+                            check = re.findall(
+                                r"Tackled by " +
+                                r"([a-zA-Z]\.[a-zA-Z\'\-\s\,\.\;]+) at " +
+                                r"([a-zA-Z]+\s[0-9]+|" +
+                                r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)",
+                                desc
+                            )
+                            return_loc_end_temp = check[0][1]
+                            kr_start = get_yardline(
+                                return_loc_start_temp,
+                                posteam
+                            )
+
+                            kr_end = get_yardline(
+                                return_loc_end_temp,
+                                posteam
+                            )
+
+                            return_yards = kr_end - kr_start
+
+                            if kr_end < 20:
+                                is_kickoff_inside_twenty = 1
+
+                            del return_loc_start_temp
+                            del return_loc_end_temp
+
+                elif play_type == "kickoff":
                     check = re.findall(
                         r"([a-zA-Z]\.[a-zA-Z\'\-\s]+) kicks ([0-9]+) " +
                         r"yards from ([a-zA-Z]+\s[0-9]+|" +
@@ -1694,7 +1842,7 @@ def parser(
                         elif "tackled by" in desc.lower():
                             check = re.findall(
                                 r"Tackled by " +
-                                r"([a-zA-Z]\.[a-zA-Z\'\-\s\,\.\;]+) at " +
+                                r"([a-zA-Z\'\-\s\,\.\;]+) at " +
                                 r"([a-zA-Z]+\s[0-9]+|" +
                                 r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)",
                                 desc
@@ -1745,6 +1893,26 @@ def parser(
                 elif "fumbles," in desc.lower() \
                         and "(aborted)" not in desc.lower()\
                         and "punt" not in desc.lower()\
+                        and "ran out of bounds" in desc.lower()\
+                        and "muff" not in desc.lower()\
+                        and "pushed out of bounds" not in desc.lower():
+                    check = re.findall(
+                        r"([[a-zA-Z\'\.\-\s]+) FUMBLES, forced by " +
+                        r"([[a-zA-Z\'\.\-\s]+). Fumble RECOVERED by " +
+                        r"([a-zA-Z]+)-([[a-zA-Z\'\.\-\s]+) at " +
+                        r"([a-zA-Z]+\s[0-9]+|" +
+                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)." +
+                        r"([[a-zA-Z\'\.\-\s]+) ran out of bounds.",
+                        desc
+                    )
+
+                    fumbled_1_team = posteam
+                    fumbled_1_player_name = check[0][0]
+                    forced_fumble_player_1_team = defteam
+                    forced_fumble_player_1_player_name = check[0][1]
+                elif "fumbles," in desc.lower() \
+                        and "(aborted)" not in desc.lower()\
+                        and "punt" not in desc.lower()\
                         and "out of bounds" in desc.lower()\
                         and "muff" not in desc.lower()\
                         and "pushed out of bounds" not in desc.lower():
@@ -1758,6 +1926,86 @@ def parser(
                     fumbled_1_player_name = check[0][0]
                     forced_fumble_player_1_team = defteam
                     forced_fumble_player_1_player_name = check[0][1]
+                elif "fumbles," in desc.lower() \
+                        and "(aborted)" not in desc.lower()\
+                        and "punt" not in desc.lower()\
+                        and "rushed" in desc.lower()\
+                        and "two-point conversion attempt" in desc.lower()\
+                        and "recovers the fumble." in desc.lower():
+                    is_fumble_forced = 0
+                    is_fumble_not_forced = 0
+                    is_fumble_out_of_bounds = 0
+                    is_fumble_lost = 0
+                    fumble_recovery_1_yards = 0
+
+                    forced_fumble_player_1_team = ""
+                    forced_fumble_player_1_player_name = ""
+                    fumble_recovery_1_team = ""
+                    fumble_recovery_1_player_name = ""
+
+                    check = re.findall(
+                        r"TWO-POINT CONVERSION ATTEMPT. " +
+                        r"([[a-zA-Z\'\.\-\s]+) rushed" +
+                        r"( [a-zA-Z]+)?( [a-zA-Z]+)? to " +
+                        r"([a-zA-Z]+\s[0-9]+|" +
+                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+) for yards\." +
+                        r"( [[a-zA-Z\'\.\-\s]+)? FUMBLES, forced by " +
+                        r"([[a-zA-Z\'\.\-\s]+). ([[a-zA-Z\'\.\-\s]+) " +
+                        r"recovers the fumble. Tackled by " +
+                        r"([[a-zA-Z\'\.\-\s]+) at " +
+                        r"([a-zA-Z]+\s[0-9]+|" +
+                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\.",
+                        desc
+                    )
+                    fumbled_1_team = posteam
+                    fumbled_1_player_name = check[0][0]
+                    forced_fumble_player_1_team = defteam
+                    forced_fumble_player_1_player_name = check[0][1]
+
+                    fumble_recovery_1_team = posteam
+                    fumble_recovery_1_player_name = check[0][2]
+                    fum_start = yardline_100
+
+                    if fumble_recovery_1_team == posteam:
+                        fumble_recovery_1_yards = 0
+                    elif fumble_recovery_1_team == defteam:
+                        fumble_recovery_1_yards = 0
+                        is_fumble_lost = 1
+                    else:
+                        raise ValueError(
+                            "Unhandled fumble recovery team " +
+                            f"`{fumble_recovery_1_team}`"
+                        )
+
+                    if "tackled by at" in desc.lower() \
+                            and "replay" not in desc.lower():
+                        # Edge case found in game ID #7
+                        check = re.findall(
+                            r" ([[a-zA-Z\'\.\-\s]+) FUMBLES, forced by " +
+                            r"([[a-zA-Z\'\.\-\s]+) Fumble RECOVERED by " +
+                            r"([a-zA-Z]+)-([[a-zA-Z\'\.\-\s]+) at " +
+                            r"([a-zA-Z]+\s[0-9]+|" +
+                            r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\. " +
+                            r"Tackled by at ([a-zA-Z]+\s[0-9]+|" +
+                            r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\.",
+                            desc
+                        )
+                        fum_end_temp = check[0][5]
+                        fum_end = get_yardline(
+                            fum_end_temp,
+                            posteam
+                        )
+                        if is_fumble_lost == 1:
+                            assist_tackle_1_team = posteam
+                            assist_tackle_2_team = posteam
+                            solo_tackle_1_team = posteam
+                            fumble_recovery_1_yards = fum_end - fum_start
+                        elif is_fumble_lost == 0:
+                            fumble_recovery_1_yards = fum_start - fum_end
+
+                        del fum_end_temp
+                        del fum_end
+
                 elif "fumbles," in desc.lower() \
                         and "(aborted)" not in desc.lower()\
                         and "punt" not in desc.lower()\
@@ -1885,7 +2133,7 @@ def parser(
                     fumble_recovery_1_player_name = ""
 
                     check = re.findall(
-                        r"\. ([[a-zA-Z\'\.\-\s]+) FUMBLES, forced by. " +
+                        r". ([[a-zA-Z\'\.\-\s]+) FUMBLES, forced by. " +
                         r"Fumble RECOVERED by " +
                         r"([a-zA-Z]+)-([[a-zA-Z\'\.\-\s]+) at " +
                         r"([a-zA-Z]+\s[0-9]+|" +
@@ -1917,6 +2165,36 @@ def parser(
                         )
 
                     if "tackled by at" in desc.lower() \
+                            and "fumbles, forced by. fumble recovered" \
+                                in desc.lower():
+                        # Edge case found in a USFL game
+                        check = re.findall(
+                            r"\. ([[a-zA-Z\'\.\-\s]+) FUMBLES, forced by. " +
+                            r"Fumble RECOVERED by " +
+                            r"([a-zA-Z]+)-([[a-zA-Z\'\.\-\s]+) at " +
+                            r"([a-zA-Z]+\s[0-9]+|" +
+                            r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\. " +
+                            r"Tackled by at ([a-zA-Z]+\s[0-9]+|" +
+                            r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\.",
+                            desc
+                        )
+                        fum_end_temp = check[0][4]
+                        fum_end = get_yardline(
+                            fum_end_temp,
+                            posteam
+                        )
+                        if is_fumble_lost == 1:
+                            assist_tackle_1_team = posteam
+                            assist_tackle_2_team = posteam
+                            solo_tackle_1_team = posteam
+                            fumble_recovery_1_yards = fum_end - fum_start
+                        elif is_fumble_lost == 0:
+                            fumble_recovery_1_yards = fum_start - fum_end
+
+                        del fum_end_temp
+                        del fum_end
+
+                    elif "tackled by at" in desc.lower() \
                             and "replay" not in desc.lower():
                         # Edge case found in game ID #7
                         check = re.findall(
@@ -2063,7 +2341,7 @@ def parser(
                         pass
                     elif "tackled" in desc.lower():
                         check = re.findall(
-                            r"Tackled by ([[a-zA-Z\'\.\-\s]+) at " +
+                            r"Tackled by ([[a-zA-Z\'\.\,\-\s\;]+) at " +
                             r"([a-zA-Z]+\s[0-9]+|" +
                             r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\.",
                             desc
@@ -2102,9 +2380,9 @@ def parser(
                 if "penalty" in desc.lower():
                     is_penalty = 1
                     check = re.findall(
-                        r"PENALTY on ([a-zA-Z]+)-([[a-zA-Z\'\.\-\s]+), " +
-                        r"([a-zA-Z\s]+|[a-zA-Z0-9\/\s\(\)]+), " +
-                        r"([0-9]+) yards, ([a-zA-z\s]+)\.",
+                        r"PENALTY on ([a-zA-Z]+)-([[a-zA-Z\'\.\-\,\s]+), " +
+                        r"([a-zA-Z\s]+|[a-zA-Z0-9\/\-\s\(\)]+), " +
+                        r"([0-9]+) yards,.? ([a-zA-z\s]+)\.",
                         desc
                     )
                     penalty_team = check[0][0]
@@ -2629,6 +2907,54 @@ def get_ufl_pbp(
     return pbp_df
 
 
+def parse_usfl_pbp():
+    path = "usfl_game_logs/*.json"
+    json_files_arr = glob(pathname=path)
+    now = datetime.now()
+    pbp_df_arr = []
+    pbp_df = pd.DataFrame()
+    # print(json_files_arr)
+    for usfl_game in tqdm(json_files_arr):
+        f_path = format_folder_path(usfl_game)
+        # print(f_path)
+        game_id = int(f_path.split('/')[1].split(".")[0])
+
+        with open(f_path, "r") as f:
+            json_data = json.loads(f.read())
+        season = int(str(json_data["header"]["eventTime"]).split("-")[0])
+        week = json_data["metadata"]["parameters"]["canonicalUrl"]
+        week = week.replace("/usfl/week-", "")
+        week = week.split("-")[0]
+
+        if "playoffs" in str(week):
+            week = 11
+        if "semifinals" in str(week):
+            week = 11
+        elif "championship" in str(week):
+            week = 12
+        else:
+            week = int(week)
+
+        temp_df = parser(
+            game_json=json_data,
+            ufl_game_id=game_id,
+            season=season,
+            season_type="REGULAR SEASON",
+            week=week
+        )
+        pbp_df_arr.append(temp_df)
+
+        del f_path
+        del game_id
+        del json_data
+        del season
+        del temp_df
+
+    pbp_df = pd.concat(pbp_df_arr, ignore_index=True)
+    pbp_df["last_updated"] = now
+    pbp_df.to_csv("pbp/usfl_pbp.csv", index=False)
+
+
 if __name__ == "__main__":
     now = datetime.now()
 
@@ -2645,7 +2971,7 @@ if __name__ == "__main__":
     )
 
     args = arg_parser.parse_args()
-
+    # parse_usfl_pbp()
     get_ufl_pbp(
         season=now.year,
         save_csv=args.save_csv,
