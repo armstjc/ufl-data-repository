@@ -1930,6 +1930,58 @@ def parser(
                         and "(aborted)" not in desc.lower()\
                         and "punt" not in desc.lower()\
                         and "rushed" in desc.lower()\
+                        and "tackled by at " in desc.lower()\
+                        and "two-point conversion attempt" in desc.lower()\
+                        and "recovers the fumble." in desc.lower():
+                    is_fumble_forced = 0
+                    is_fumble_not_forced = 0
+                    is_fumble_out_of_bounds = 0
+                    is_fumble_lost = 0
+                    fumble_recovery_1_yards = 0
+
+                    forced_fumble_player_1_team = ""
+                    forced_fumble_player_1_player_name = ""
+                    fumble_recovery_1_team = ""
+                    fumble_recovery_1_player_name = ""
+
+                    check = re.findall(
+                        r"TWO-POINT CONVERSION ATTEMPT. " +
+                        r"([[a-zA-Z\'\.\-\s]+) rushed" +
+                        r"( [a-zA-Z]+)?( [a-zA-Z]+)? to " +
+                        r"([a-zA-Z]+\s[0-9]+|" +
+                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+) for yards\." +
+                        r"( [[a-zA-Z\'\.\-\s]+)? FUMBLES, forced by " +
+                        r"([a-zA-Z\'\.\-\s]+). ([a-zA-Z\'\.\-\s]+) " +
+                        r"recovers the fumble. Tackled by at " +
+                        r"([a-zA-Z]+\s[0-9]+|" +
+                        r"[a-zA-Z]+\s[a-zA-Z0-9]+\s[a-zA-Z]+)\.",
+                        desc
+                    )
+                    fumbled_1_team = posteam
+                    fumbled_1_player_name = check[0][0]
+                    forced_fumble_player_1_team = defteam
+                    forced_fumble_player_1_player_name = check[0][1]
+
+                    fumble_recovery_1_team = posteam
+                    fumble_recovery_1_player_name = check[0][2]
+                    fum_start = yardline_100
+
+                    if fumble_recovery_1_team == posteam:
+                        fumble_recovery_1_yards = 0
+                    elif fumble_recovery_1_team == defteam:
+                        fumble_recovery_1_yards = 0
+                        is_fumble_lost = 1
+                    else:
+                        raise ValueError(
+                            "Unhandled fumble recovery team " +
+                            f"`{fumble_recovery_1_team}`"
+                        )
+
+
+                elif "fumbles," in desc.lower() \
+                        and "(aborted)" not in desc.lower()\
+                        and "punt" not in desc.lower()\
+                        and "rushed" in desc.lower()\
                         and "two-point conversion attempt" in desc.lower()\
                         and "recovers the fumble." in desc.lower():
                     is_fumble_forced = 0
@@ -2971,7 +3023,7 @@ if __name__ == "__main__":
     )
 
     args = arg_parser.parse_args()
-    parse_usfl_pbp()
+    # parse_usfl_pbp()
     get_ufl_pbp(
         season=now.year,
         save_csv=args.save_csv,
