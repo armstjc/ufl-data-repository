@@ -1697,6 +1697,8 @@ def parser(
                         is_solo_tackle = 1
                         solo_tackle_1_team = defteam
                         solo_tackle_1_player_name = tacklers_temp
+                elif "pushed out of bounds by at" in desc.lower():
+                    pass
                 elif "pushed out" in desc.lower():
                     check = re.findall(
                         r"Pushed out of bounds by " +
