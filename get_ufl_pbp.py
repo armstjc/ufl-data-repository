@@ -2896,7 +2896,7 @@ def get_ufl_pbp(
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4)"
         + " AppleWebKit/537.36 (KHTML, like Gecko) "
-        + "Chrome/83.0.4103.97 Safari/537.36",
+        + "Chrome/125.0.0.0 Safari/537.36",
         # "Referer": "https://www.theufl.com/",
     }
     now = datetime.now(UTC).isoformat()
@@ -2930,7 +2930,13 @@ def get_ufl_pbp(
         game_json = json.loads(response.text)
 
         season_type = ufl_game_type_arr[g]
-        week = int(week_title_arr[g].lower().replace("week ", ""))
+        week = int(
+            week_title_arr[g].lower().replace(
+                "week ", ""
+            ).replace(
+                "playoffs", "11"
+            )
+        )
 
         plays_df = parser(
             game_json=game_json,
