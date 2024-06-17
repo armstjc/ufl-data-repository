@@ -213,7 +213,8 @@ def get_ufl_schedules(
 
     schedule_df = pd.concat(schedule_df_arr, ignore_index=True)
     schedule_df["last_updated"] = now
-    schedule_df = schedule_df[columns_order]
+    # schedule_df = schedule_df[columns_order]
+    schedule_df = schedule_df.reindex(columns=columns_order)
 
     if save_csv is True:
         schedule_df.to_csv(
