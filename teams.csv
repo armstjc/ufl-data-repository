@@ -1,0 +1,41 @@
+﻿season,stats_crew_league_id,league_id,stats_crew_team_id,fox_sports_team_id,fox_sports_analytics_name,team_name
+2020,XFL,XFL2,XFLDAR,,arlington-renegades,Dallas Renegades
+2020,XFL,XFL2,XFLDCD,,dc-defenders,DC Defenders
+2020,XFL,XFL2,XFLHOR,,houston-roughnecks,Houston Roughnecks
+2020,XFL,XFL2,XFLLAW,,,Los Angeles Wildcats
+2020,XFL,XFL2,XFLNYG,,,New York Guardians
+2020,XFL,XFL2,XFLSED,,,Seattle Dragons
+2020,XFL,XFL2,XFLSLB,,st-louis-battlehawks,St. Louis BattleHawks
+2020,XFL,XFL2,XFLTBV,,,Tampa Bay Vipers
+2022,USFL2,USFL,US2BIS,,birmingham-stallions,Birmingham Stallions
+2022,USFL2,USFL,US2HOG,,,Houston Gamblers
+2022,USFL2,USFL,US2MIP,,michigan-panthers,Michigan Panthers
+2022,USFL2,USFL,US2NJG,,,New Jersey Generals
+2022,USFL2,USFL,US2NOB,,,New Orleans Breakers
+2022,USFL2,USFL,US2PHS,,,Philadelphia Stars
+2022,USFL2,USFL,US2PIM,,,Pittsburgh Maulers
+2022,USFL2,USFL,US2TBB,,,Tampa Bay Bandits
+2023,USFL2,USFL,US2BIS,,birmingham-stallions,Birmingham Stallions
+2023,USFL2,USFL,US2HOG,,,Houston Gamblers
+2023,USFL2,USFL,US2MSB,,,Memphis Showboats
+2023,USFL2,USFL,US2MIP,,,Michigan Panthers
+2023,USFL2,USFL,US2NJG,,,New Jersey Generals
+2023,USFL2,USFL,US2NOB,,,New Orleans Breakers
+2023,USFL2,USFL,US2PHS,,,Philadelphia Stars
+2023,USFL2,USFL,US2PIM,,,Pittsburgh Maulers
+2023,XFL,XFL3,XFLAAR,,arlington-renegades,Arlington Renegades
+2023,XFL,XFL3,XFLDCD,,dc-defenders,DC Defenders
+2023,XFL,XFL3,XFLHOR,,houston-roughnecks,Houston Roughnecks
+2023,XFL,XFL3,XFLOGU,,,Orlando Guardians
+2023,XFL,XFL3,XFLSAB,,san-antonio-brahmas,San Antonio Brahmas
+2023,XFL,XFL3,XFLSSD,,,Seattle Sea Dragons
+2023,XFL,XFL3,XFLSTB,,st-louis-battlehawks,St. Louis Battlehawks
+2023,XFL,XFL3,XFLVVI,,,Vegas Vipers
+2024,UFL2,UFL,US2BIS,1,birmingham-stallions,Birmingham Stallions
+2024,UFL2,UFL,XFLSLB,8,st-louis-battlehawks,St. Louis Battlehawks
+2024,UFL2,UFL,XFLDCD,6,dc-defenders,DC Defenders
+2024,UFL2,UFL,US2MIS,4,memphis-showboats,Memphis Showboats
+2024,UFL2,UFL,XFLSAB,7,san-antonio-brahmas,San Antonio Brahmas
+2024,UFL2,UFL,XFLAAR,5,arlington-renegades,Arlington Renegades
+2024,UFL2,UFL,XFLHOR,2,houston-roughnecks,Houston Roughnecks
+2024,UFL2,UFL,US2MIP,3,michigan-panthers,Michigan Panthers

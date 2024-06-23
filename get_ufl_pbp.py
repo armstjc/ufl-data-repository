@@ -2935,6 +2935,8 @@ def get_ufl_pbp(
                 "week ", ""
             ).replace(
                 "playoffs", "11"
+            ).replace(
+                "championship", "12"
             )
         )
 
@@ -3031,7 +3033,7 @@ if __name__ == "__main__":
     )
 
     args = arg_parser.parse_args()
-    # parse_usfl_pbp()
+    parse_usfl_pbp()
     get_ufl_pbp(
         season=now.year,
         save_csv=args.save_csv,
