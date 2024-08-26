@@ -23,7 +23,7 @@ from tqdm import tqdm
 from utils import get_fox_api_key, format_folder_path
 
 
-def get_yardline(yardline, posteam):
+def get_yardline(yardline: str, posteam: str):
     """ """
     try:
         yardline_temp = re.findall(
@@ -1978,7 +1978,6 @@ def parser(
                             "Unhandled fumble recovery team " +
                             f"`{fumble_recovery_1_team}`"
                         )
-
 
                 elif "fumbles," in desc.lower() \
                         and "(aborted)" not in desc.lower()\

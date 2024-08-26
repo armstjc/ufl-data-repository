@@ -77,6 +77,8 @@ def get_ufl_standings(
         "W%",
         "PF",
         "PA",
+        "pythagorean_W",
+        "pythagorean_L",
         "home_W",
         "home_L",
         "away_W",
@@ -187,17 +189,18 @@ def get_ufl_standings(
         "div_W-L"].str.split("-", expand=True)
     conf_standings_df.replace("", np.nan, inplace=True)
     conf_standings_df = conf_standings_df.fillna(0)
-
     conf_standings_df = conf_standings_df.astype(
         {
-            "W": "int64",
-            "L": "int64",
-            "home_W": "int64",
-            "home_L": "int64",
-            "away_W": "int64",
-            "away_L": "int64",
-            "div_W": "int64",
-            "div_L": "int64",
+            "W": "int8",
+            "L": "int8",
+            "home_W": "int8",
+            "home_L": "int8",
+            "away_W": "int8",
+            "away_L": "int8",
+            "div_W": "int8",
+            "div_L": "int8",
+            "PF": "int32",
+            "PA": "int32",
         }
     )
 
@@ -254,14 +257,16 @@ def get_ufl_standings(
 
     lg_standings_df = lg_standings_df.astype(
         {
-            "W": "int64",
-            "L": "int64",
-            "home_W": "int64",
-            "home_L": "int64",
-            "away_W": "int64",
-            "away_L": "int64",
-            "div_W": "int64",
-            "div_L": "int64",
+            "W": "int8",
+            "L": "int8",
+            "home_W": "int8",
+            "home_L": "int8",
+            "away_W": "int8",
+            "away_L": "int8",
+            "div_W": "int8",
+            "div_L": "int8",
+            "PF": "int16",
+            "PA": "int16",
         }
     )
 
@@ -269,6 +274,45 @@ def get_ufl_standings(
     max_games = int(lg_standings_df["G"].max())
     lg_standings_df["season"] = season
     lg_standings_df["week"] = max_games
+
+    # pythagorean wins/losses
+    lg_standings_df["pythagorean_W"] = (
+        lg_standings_df["G"] * (
+            (pow(lg_standings_df["PF"], 2.37)) /
+            (
+                (pow(lg_standings_df["PF"], 2.37)) +
+                (pow(lg_standings_df["PA"], 2.37))
+            )
+        )
+    )
+    lg_standings_df["pythagorean_W"] = lg_standings_df[
+        "pythagorean_W"
+    ].round(3)
+    lg_standings_df["pythagorean_L"] = (
+        lg_standings_df["G"] - lg_standings_df["pythagorean_W"]
+    )
+    lg_standings_df["pythagorean_L"] = lg_standings_df[
+        "pythagorean_L"
+    ].round(3)
+
+    conf_standings_df["pythagorean_W"] = (
+        conf_standings_df["G"] * (
+            (pow(conf_standings_df["PF"], 2.37)) /
+            (
+                (pow(conf_standings_df["PF"], 2.37)) +
+                (pow(conf_standings_df["PA"], 2.37))
+            )
+        )
+    )
+    conf_standings_df["pythagorean_W"] = conf_standings_df[
+        "pythagorean_W"
+    ].round(3)
+    conf_standings_df["pythagorean_L"] = (
+        conf_standings_df["G"] - conf_standings_df["pythagorean_W"]
+    )
+    conf_standings_df["pythagorean_L"] = conf_standings_df[
+        "pythagorean_L"
+    ].round(3)
 
     # schedule_df = schedule_df[columns_order]
 
