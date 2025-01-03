@@ -3032,9 +3032,23 @@ if __name__ == "__main__":
     )
 
     args = arg_parser.parse_args()
-    parse_usfl_pbp()
-    get_ufl_pbp(
-        season=now.year,
-        save_csv=args.save_csv,
-        save_parquet=args.save_parquet
-    )
+    # parse_usfl_pbp()
+
+    if now.month == 3 and now.day >= 28:
+        get_ufl_pbp(
+            season=now.year,
+            save_csv=args.save_csv,
+            save_parquet=args.save_parquet
+        )
+    elif now.month > 3:
+        get_ufl_pbp(
+            season=now.year,
+            save_csv=args.save_csv,
+            save_parquet=args.save_parquet
+        )
+    else:
+        get_ufl_pbp(
+            season=now.year-1,
+            save_csv=args.save_csv,
+            save_parquet=args.save_parquet
+        )

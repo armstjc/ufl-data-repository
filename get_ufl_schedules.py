@@ -118,7 +118,10 @@ def get_ufl_schedules(
 
         for week in tqdm(s_type["selectionList"]):
             week_id = week["id"]
-            week_title = week["title"]
+            try:
+                week_title = week["title"]
+            except KeyError:
+                week_title = None
 
             _, week_num, sea_sec = week_id.split("-")
 

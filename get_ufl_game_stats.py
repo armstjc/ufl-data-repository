@@ -1249,10 +1249,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    get_ufl_game_stats(
-        season=now.year,
-        parse_team_stats=True,
-        save_csv=args.save_csv,
-        save_parquet=args.save_parquet,
-        save_json=args.save_json,
-    )
+    if now.month >= 3:
+        get_ufl_game_stats(
+            season=now.year,
+            parse_team_stats=True,
+            save_csv=args.save_csv,
+            save_parquet=args.save_parquet,
+            save_json=args.save_json,
+        )
+    else:
+        get_ufl_game_stats(
+            season=now.year-1,
+            parse_team_stats=True,
+            save_csv=args.save_csv,
+            save_parquet=args.save_parquet,
+            save_json=args.save_json,
+        )

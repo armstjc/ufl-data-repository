@@ -11,6 +11,7 @@ from argparse import ArgumentParser, BooleanOptionalAction
 from datetime import UTC, datetime
 import json
 import logging
+from urllib.error import HTTPError
 from os import mkdir
 
 import pandas as pd
@@ -96,15 +97,28 @@ def ufl_roster_data(
         logging.info("`rosters/weekly_rosters` already exists.")
 
     # Get the current week for these rosters
-    schedule_df = pd.read_parquet(
-        "https://github.com/armstjc/ufl-data-repository/releases/download/"
-        + f"ufl-schedule/{season}_ufl_schedule.parquet"
-    )
+    try:
+        schedule_df = pd.read_parquet(
+            "https://github.com/armstjc/ufl-data-repository/releases/download/"
+            + f"ufl-schedule/{season}_ufl_schedule.parquet"
+        )
+    except HTTPError:
+        schedule_df = pd.read_parquet(
+            "https://github.com/armstjc/ufl-data-repository/releases/download/"
+            + f"ufl-schedule/{season-1}_ufl_schedule.parquet"
+        )
+
     schedule_df = schedule_df[schedule_df["home_score"] > 0]
     current_week = int(schedule_df["week_num"].max())
     # Doing this so the rosters are always up to date
     # with the current week.
-    current_week += 1
+    current_month = int(now[5:7])
+    if current_month < 3:
+        current_week = 0
+    else:
+        current_week += 1
+
+    del current_month
 
     for t_id in tqdm(range(1, 9)):
         url = (
@@ -123,9 +137,12 @@ def ufl_roster_data(
                     player_id = player["entityLink"]["layout"]["tokens"]["id"]
                     temp_df = pd.DataFrame({"player_id": player_id}, index=[0])
 
-                    temp_df["player_analytics_name"] = player["entityLink"][
-                        "analyticsName"
-                    ]
+                    try:
+                        temp_df["player_analytics_name"] = player["entityLink"][
+                            "analyticsName"
+                        ]
+                    except Exception:
+                        temp_df["player_analytics_name"] = None
                     temp_df["team_id"] = t_id
                     temp_df["player_num"] = player[
                         "columns"][0]["superscript"].replace("#", "")
@@ -226,6 +243,20 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # if now.month >= 3:
+    #     ufl_roster_data(
+    #         season=now.year,
+    #         save_csv=args.save_csv,
+    #         save_parquet=args.save_parquet
+    #     )
+    # else:
+    #     ufl_roster_data(
+    #         season=now.year - 1,
+    #         save_csv=args.save_csv,
+    #         save_parquet=args.save_parquet
+    #     )
     ufl_roster_data(
-        season=now.year, save_csv=args.save_csv, save_parquet=args.save_parquet
+        season=now.year,
+        save_csv=args.save_csv,
+        save_parquet=args.save_parquet
     )
