@@ -7,12 +7,12 @@
 ###############################################################################
 """
 
-from argparse import ArgumentParser, BooleanOptionalAction
-from datetime import UTC, datetime
 import json
 import logging
-from urllib.error import HTTPError
+from argparse import ArgumentParser, BooleanOptionalAction
+from datetime import UTC, datetime
 from os import mkdir
+from urllib.error import HTTPError
 
 import pandas as pd
 import requests
@@ -98,18 +98,29 @@ def ufl_roster_data(
 
     # Get the current week for these rosters
     try:
+        url = (
+            "https://github.com/armstjc/ufl-data-repository/releases/download/"
+            + f"ufl-schedule/{season}_ufl_schedule.parquet"
+        )
         schedule_df = pd.read_parquet(
             "https://github.com/armstjc/ufl-data-repository/releases/download/"
             + f"ufl-schedule/{season}_ufl_schedule.parquet"
         )
     except HTTPError:
+        url = (
+            "https://github.com/armstjc/ufl-data-repository/releases/download/"
+            + f"ufl-schedule/{season-1}_ufl_schedule.parquet"
+        )
         schedule_df = pd.read_parquet(
             "https://github.com/armstjc/ufl-data-repository/releases/download/"
             + f"ufl-schedule/{season-1}_ufl_schedule.parquet"
         )
+    try:
+        schedule_df = schedule_df[schedule_df["home_score"] > 0]
+        current_week = int(schedule_df["week_num"].max())
+    except ValueError:
+        current_week = 0
 
-    schedule_df = schedule_df[schedule_df["home_score"] > 0]
-    current_week = int(schedule_df["week_num"].max())
     # Doing this so the rosters are always up to date
     # with the current week.
     current_month = int(now[5:7])

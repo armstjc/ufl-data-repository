@@ -566,7 +566,12 @@ def parse_ufl_team_season_stats(season: int):
 
 
 if __name__ == "__main__":
-    current_year = datetime.now().year
+    now = datetime.now()
+    current_year = now.year
+    
+    if now.month < 3:
+        current_year -= 1
+
     try:
         mkdir("season_stats/player")
     except Exception as e:
