@@ -188,7 +188,11 @@ def get_ufl_standings(
     conf_standings_df[["div_W", "div_L"]] = conf_standings_df[
         "div_W-L"].str.split("-", expand=True)
     conf_standings_df.replace("", np.nan, inplace=True)
+
+    conf_standings_df["PA"] = conf_standings_df["PA"].replace("-", "0")
+    conf_standings_df["PF"] = conf_standings_df["PF"].replace("-", "0")
     conf_standings_df = conf_standings_df.fillna(0)
+
     conf_standings_df = conf_standings_df.astype(
         {
             "W": "int8",
@@ -253,6 +257,9 @@ def get_ufl_standings(
     lg_standings_df[["div_W", "div_L"]] = lg_standings_df[
         "div_W-L"].str.split("-", expand=True)
     lg_standings_df.replace("", np.nan, inplace=True)
+
+    lg_standings_df["PA"] = lg_standings_df["PA"].replace("-", "0")
+    lg_standings_df["PF"] = lg_standings_df["PF"].replace("-", "0")
     lg_standings_df = lg_standings_df.fillna(0)
 
     lg_standings_df = lg_standings_df.astype(

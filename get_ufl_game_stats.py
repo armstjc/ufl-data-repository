@@ -911,7 +911,15 @@ def get_ufl_game_stats(
     schedule_df = schedule_df[
         (schedule_df["away_score"] > -1) | (schedule_df["home_score"] > -1)
     ]
-    # print(schedule_df)
+
+    if len(schedule_df) == 0:
+        schedule_df = pd.read_parquet(
+            "https://github.com/armstjc/ufl-data-repository/releases/"
+            + f"download/ufl-schedule/{season}_ufl_schedule.parquet"
+        )
+        schedule_df = schedule_df[
+            schedule_df["week_num"] == 1
+        ]
 
     ufl_game_id_arr = schedule_df["ufl_game_id"].to_numpy()
 
@@ -971,7 +979,10 @@ def get_ufl_game_stats(
         away_team_nickname = str(
             game_json["header"]["leftTeam"]["longName"]
         ).upper()
-        away_team_score = int(game_json["header"]["leftTeam"]["score"])
+        try:
+            away_team_score = int(game_json["header"]["leftTeam"]["score"])
+        except Exception:
+            away_team_score = 0
         away_team_loser_flag = game_json["header"]["leftTeam"]["isLoser"]
 
         home_team_id = int(
@@ -985,8 +996,16 @@ def get_ufl_game_stats(
         home_team_nickname = str(
             game_json["header"]["rightTeam"]["longName"]
         ).upper()
-        home_team_score = int(game_json["header"]["leftTeam"]["score"])
+        try:
+            home_team_score = int(game_json["header"]["leftTeam"]["score"])
+        except Exception:
+            home_team_score = 0
         home_team_loser_flag = game_json["header"]["leftTeam"]["isLoser"]
+
+        if "boxscore" in game_json:
+            pass
+        else:
+            continue
 
         for team in game_json["boxscore"]["boxscoreSections"]:
 
