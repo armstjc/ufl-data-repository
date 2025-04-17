@@ -1097,6 +1097,43 @@ def parser(
                     "fumble" in play_desc.lower() and
                     "forced by" in play_desc.lower() and
                     "recovered by" in play_desc.lower() and
+                    "tackled by" not in play_desc.lower()
+                ):
+                    temp_df["is_pass_attempt"] = True
+                    temp_df["is_complete_pass"] = True
+                    temp_df["is_fumble"] = True
+                    temp_df["is_fumble_forced"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["passer_player_name"] = play_arr[0][0]
+                    temp_df["pass_length"] = play_arr[0][1]
+                    temp_df["pass_location"] = play_arr[0][2]
+                    temp_df["receiver_player_name"] = play_arr[0][3]
+                    temp_df["receiving_yards"] = int(play_arr[0][4])
+                    temp_df["passing_yards"] = int(play_arr[0][4])
+                    temp_df["yards_gained"] = int(play_arr[0][4])
+
+                    temp_df["fumbled_1_team"] = posteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][5]
+
+                    temp_df["forced_fumble_player_1_team"] = defteam
+                    temp_df["forced_fumble_player_1_player_name"] = play_arr[0][6]
+
+                    temp_df["fumble_recovery_1_team"] = play_arr[0][7]
+                    temp_df["fumble_recovery_1_player_name"] = play_arr[0][8]
+
+                    temp_df["fumble_recovery_1_yards"] = 0
+
+                    # tacklers_arr = play_arr[0][10]
+                elif (
+                    "pass" in play_desc.lower() and
+                    "complete" in play_desc.lower() and
+                    "fumble" in play_desc.lower() and
+                    "forced by" in play_desc.lower() and
+                    "recovered by" in play_desc.lower() and
                     "tackled by" in play_desc.lower()
                 ):
                     temp_df["is_pass_attempt"] = True
@@ -1342,7 +1379,6 @@ def parser(
 
                     temp_df["return_team"] = defteam
                     temp_df["return_yards"] = 0
-
                 elif (
                     "pass" in play_desc.lower() and
                     "intercepted" in play_desc.lower() and
@@ -1432,7 +1468,7 @@ def parser(
                     "pass" in play_desc.lower() and
                     "intercepted" in play_desc.lower() and
                     "lateral to" in play_desc.lower() and
-                    "recovered by" not   in play_desc.lower() and
+                    "recovered by" not in play_desc.lower() and
                     "out of bounds" in play_desc.lower()
                 ):
                     temp_df["is_pass_attempt"] = True
@@ -1671,6 +1707,22 @@ def parser(
                     # temp_df["rushing_yards"] = int(play_arr[0][3])
                     # temp_df["yards_gained"] = int(play_arr[0][3])
                     tacklers_arr = play_arr[0][3]
+                elif (
+                    "rushed up the middle" in play_desc.lower() and
+                    "pushed out of bounds by" in play_desc.lower()
+                ):
+                    temp_df["is_rush_attempt"] = True
+                    temp_df["is_out_of_bounds"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\, ]+) rushed up the middle for ([\-0-9]+) yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["rusher_player_name"] = play_arr[0][0]
+                    temp_df["run_location"] = "middle"
+                    # temp_df["run_gap"] = play_arr[0][2]
+                    temp_df["rushing_yards"] = int(play_arr[0][1])
+                    temp_df["yards_gained"] = int(play_arr[0][1])
+                    tacklers_arr = play_arr[0][2]
                 elif (
                     "rushed" in play_desc.lower() and
                     "pushed out of bounds by" in play_desc.lower()
@@ -2472,7 +2524,15 @@ def parser(
                     if temp_yl_2 > 80:
                         temp_df["is_punt_inside_twenty"] = True
                     del temp_yl_1, temp_yl_2
-
+                elif (
+                    "tackled by" in play_desc.lower()
+                ):
+                    # to handle weird situations where this is the only part of the play that still exists.
+                    play_arr = re.findall(
+                        r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    tacklers_arr = play_arr[0][0]
                 # Penalties (before the snap)
                 elif (
                     "penalty" in play_desc.lower()
@@ -2516,7 +2576,7 @@ def parser(
                     temp_df["is_penalty"] = True
 
                     play_arr = re.findall(
-                        r"PENALTY on ([A-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+)\, ([a-zA-Z\s\/]+)\, ([0-9]+) yard[s]?, ([a-zA-Z\s]+)\.",
+                        r"PENALTY on ([A-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+)\, ([a-zA-Z\s\/]+)\, ([0-9]+) yard[s]?,\.? ([a-zA-Z\s]+)\.",
                         play_desc
                     )
                     temp_df["penalty_team"] = play_arr[0][0]
@@ -2694,7 +2754,7 @@ def parse_usfl_pbp():
     pbp_df.to_csv("pbp/usfl_pbp.csv", index=False)
 
 
-if __name__ == "__main__":
+def main():
     now = datetime.now()
 
     arg_parser = ArgumentParser()
@@ -2731,3 +2791,12 @@ if __name__ == "__main__":
             save_parquet=args.save_parquet
         )
 
+
+if __name__ == "__main__":
+    # main()
+    for i in range(2025, 2024, -1):
+        get_ufl_pbp(
+            season=i,
+            save_csv=True,
+            save_parquet=True
+        )
