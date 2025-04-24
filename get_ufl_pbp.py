@@ -560,12 +560,12 @@ def parser(
                 # Handler for aborted plays (fumbled snap)
                 if "fumbles (aborted)." in play_desc.lower():
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+ \(aborted\)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+ \(aborted\)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
 
                     play_desc = re.sub(
-                        r"([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+ \(aborted\)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+ \(aborted\)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         "",
                         play_desc
                     )
@@ -633,7 +633,7 @@ def parser(
                     "tackled by" in play_desc.lower()
                 ):
                     play_arr = re.findall(
-                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) steps back to pass\. Catch made by ([a-zA-Z\'\.\-\, ]+) for yards\. Tackled by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for yards\. Tackled by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
                         play_desc
                     )
                     if "one" in play_arr[0][0].lower():
@@ -670,7 +670,7 @@ def parser(
                 ):
                     temp_df["is_defensive_two_point_attempt"] = True
                     play_arr = re.findall(
-                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) steps back to pass\. ([a-zA-Z\'\.\-\, ]+) intercepts the ball\. Pushed out of bounds by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\. [DEFENSIVE|defensive]+ [CONVERSION|conversion]+ [RECOVERY|recovery]+ ([a-zA-Z]+)\.",
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. ([a-zA-Z\'\.\-\,\; ]+) intercepts the ball\. Pushed out of bounds by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\. [DEFENSIVE|defensive]+ [CONVERSION|conversion]+ [RECOVERY|recovery]+ ([a-zA-Z]+)\.",
                         play_desc
                     )
                     if "one" in play_arr[0][0].lower():
@@ -706,10 +706,48 @@ def parser(
                     "-point conversion attempt" in play_desc.lower() and
                     "pass" in play_desc.lower() and
                     "catch made" in play_desc.lower() and
+                    "for yards" in play_desc.lower() and
+                    "pushed out of bounds by" in play_desc.lower()
+                ):
+                    play_arr = re.findall(
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for yards\. Pushed out of bounds by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Z0-9 ]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
+                        play_desc
+                    )
+                    if "one" in play_arr[0][0].lower():
+                        temp_df["is_one_point_attempt"] = True
+                    elif "two" in play_arr[0][0].lower():
+                        temp_df["is_two_point_attempt"] = True
+                    elif "three" in play_arr[0][0].lower():
+                        temp_df["is_three_point_attempt"] = True
+
+                    temp_df["passer_player_name"] = play_arr[0][1]
+                    temp_df["receiver_player_name"] = play_arr[0][2]
+                    tacklers_arr = play_arr[0][3]
+                    success_or_failure = play_arr[0][6].lower()
+
+                    if (
+                        "suc" in success_or_failure and
+                        "one" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_one_point_attempt_success"] = True
+                    elif (
+                        "suc" in success_or_failure and
+                        "two" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_two_point_attempt_success"] = True
+                    elif (
+                        "suc" in success_or_failure and
+                        "three" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_three_point_attempt_success"] = True
+                elif (
+                    "-point conversion attempt" in play_desc.lower() and
+                    "pass" in play_desc.lower() and
+                    "catch made" in play_desc.lower() and
                     "for yards" in play_desc.lower()
                 ):
                     play_arr = re.findall(
-                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) steps back to pass\. Catch made by ([a-zA-Z\'\.\-\, ]+) for yards\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for yards\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
                         play_desc
                     )
                     if "one" in play_arr[0][0].lower():
@@ -741,10 +779,59 @@ def parser(
                 elif (
                     "-point conversion attempt" in play_desc.lower() and
                     "rushed up the middle" in play_desc.lower() and
+                    "fumbles" in play_desc.lower() and
+                    "forced by" in play_desc.lower() and
+                    "recovers the fumble" in play_desc.lower() and
+                    "tackled by" in play_desc.lower() and
+                    "defensive conversion recovery" in play_desc.lower()
+                ):
+                    temp_df["is_defensive_two_point_attempt"] = True
+                    play_arr = re.findall(
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) rushed up the middle to ([A-Za-z0-9\s]+) for yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) recovers the fumble\. Tackled by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\. [DEFENSIVE|defensive]+ [CONVERSION|conversion]+ [RECOVERY|recovery]+ ([A-Z]+)\.",
+                        play_desc
+                    )
+                    if "one" in play_arr[0][0].lower():
+                        temp_df["is_one_point_attempt"] = True
+                    elif "two" in play_arr[0][0].lower():
+                        temp_df["is_two_point_attempt"] = True
+                    elif "three" in play_arr[0][0].lower():
+                        temp_df["is_three_point_attempt"] = True
+
+                    temp_df["rusher_player_name"] = play_arr[0][1]
+                    temp_df["fumbled_1_team"] = posteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][3]
+                    temp_df["forced_fumble_player_1_team"] = defteam
+                    temp_df["forced_fumble_player_1_player_name"] = play_arr[0][4]
+                    temp_df["fumble_recovery_1_player_name"] = play_arr[0][5]
+                    tacklers_arr = play_arr[0][6]
+
+                    success_or_failure = play_arr[0][9].lower()
+
+                    if (
+                        "suc" in success_or_failure and
+                        "one" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_one_point_attempt_success"] = True
+                    elif (
+                        "suc" in success_or_failure and
+                        "two" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_two_point_attempt_success"] = True
+                    elif (
+                        "suc" in success_or_failure and
+                        "three" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_three_point_attempt_success"] = True
+
+                    if "suc" in play_arr[0][10]:
+                        temp_df["is_defensive_two_point_conv"] = True
+                elif (
+                    "-point conversion attempt" in play_desc.lower() and
+                    "rushed up the middle" in play_desc.lower() and
                     "tackled by" in play_desc.lower()
                 ):
                     play_arr = re.findall(
-                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) rushed up the middle to ([A-Za-z0-9\s]+) for yard[s]?\. Tackled by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) rushed up the middle to ([A-Za-z0-9\s]+) for yard[s]?\. Tackled by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
                         play_desc
                     )
                     if "one" in play_arr[0][0].lower():
@@ -781,7 +868,7 @@ def parser(
                     "tackled by" in play_desc.lower()
                 ):
                     play_arr = re.findall(
-                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) to ([A-Za-z0-9\s]+) for yard[s]?\. Tackled by ([a-zA-Z\;\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) to ([A-Za-z0-9\s]+) for yard[s]?\. Tackled by ([a-zA-Z\;\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
                         play_desc
                     )
                     if "one" in play_arr[0][0].lower():
@@ -817,7 +904,7 @@ def parser(
                     "rushed up the middle" in play_desc.lower()
                 ):
                     play_arr = re.findall(
-                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) rushed up the middle to ([A-Za-z0-9\s]+) for yard[s]?\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) rushed up the middle to ([A-Za-z0-9\s]+) for yard[s]?\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
                         play_desc
                     )
                     if "one" in play_arr[0][0].lower():
@@ -853,7 +940,7 @@ def parser(
                     "rushed" in play_desc.lower()
                 ):
                     play_arr = re.findall(
-                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\, ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) to ([A-Za-z0-9\s]+) for yard[s]?\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) to ([A-Za-z0-9\s]+) for yard[s]?\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\.",
                         play_desc
                     )
                     if "one" in play_arr[0][0].lower():
@@ -899,7 +986,7 @@ def parser(
                     temp_df["passer_player_name"] = temp_df["fumbled_2_player_name"]
 
                     play_arr = re.findall(
-                        r"[PASS|pass]+ incomplete ([A-Za-z]+) ([A-Za-z]+) intended for ([a-zA-Z\'\.\-\, ]+)",
+                        r"[PASS|pass]+ incomplete ([A-Za-z]+) ([A-Za-z]+) intended for ([a-zA-Z\'\.\-\,\; ]+)",
                         play_desc
                     )
                     temp_df["pass_length"] = play_arr[0][0]
@@ -913,7 +1000,7 @@ def parser(
                     temp_df["is_pass_attempt"] = True
                     temp_df["is_incomplete_pass"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) steps back to pass\. Pass incomplete ([a-zA-Z]+) ([a-zA-Z]+) intended for\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Pass incomplete ([a-zA-Z]+) ([a-zA-Z]+) intended for\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -928,7 +1015,7 @@ def parser(
                     play_desc = play_desc.replace("[","")
                     play_desc = play_desc.replace("]","")
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) steps back to pass\. Pass incomplete ([a-zA-Z]+) ([a-zA-Z]+) intended for ([a-zA-Z\'\.\-\, ]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Pass incomplete ([a-zA-Z]+) ([a-zA-Z]+) intended for ([a-zA-Z\'\.\-\,\; ]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -944,8 +1031,8 @@ def parser(
                     temp_df["is_complete_pass"] = True
                     temp_df["is_pass_touchdown"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
-                        r"complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
+                        r"complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for " +
                         r"([0-9\-]+) yard[s]?\. TOUCHDOWN\.",
                         play_desc
                     )
@@ -980,7 +1067,7 @@ def parser(
                     temp_df["is_fumble_not_forced"] = True
                     temp_df["is_lateral_reception"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. Lateral to ([a-zA-Z\'\.\-\, ]+) to ([A-Za-z0-9\s]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. Lateral to ([a-zA-Z\'\.\-\,\; ]+) to ([A-Za-z0-9\s]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1024,7 +1111,7 @@ def parser(
                     temp_df["is_fumble_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1066,7 +1153,7 @@ def parser(
                     temp_df["is_fumble_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1108,7 +1195,7 @@ def parser(
                     temp_df["is_fumble_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1145,7 +1232,7 @@ def parser(
                     temp_df["is_fumble_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1183,7 +1270,7 @@ def parser(
                     temp_df["is_complete_pass"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for yard[s]?\. ([a-zA-Z\'\.\-\, ]+) ran out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) ran out of bounds\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1202,7 +1289,7 @@ def parser(
                     temp_df["is_complete_pass"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) ran out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) ran out of bounds\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1225,7 +1312,7 @@ def parser(
                     temp_df["is_fumble_not_forced"] = True
                     temp_df["is_lateral_reception"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. Lateral to ([a-zA-Z\'\.\-\, ]+) to ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\. Out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. Lateral to ([a-zA-Z\'\.\-\,\; ]+) to ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\. Out of bounds\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1249,7 +1336,7 @@ def parser(
                     temp_df["is_pass_attempt"] = True
                     temp_df["is_complete_pass"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for yard[s]?\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for yard[s]?\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1269,8 +1356,8 @@ def parser(
                     temp_df["is_pass_attempt"] = True
                     temp_df["is_complete_pass"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
-                        r"complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
+                        r"complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for " +
                         r"([0-9\-]+) yard[s]?\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1298,7 +1385,7 @@ def parser(
                     temp_df["is_fumbled_forced"] = False
                     temp_df["is_fumbled_out_of_bounds"] = False
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) FUMBLES\, forced by ([a-zA-Z\'\.\-\, ]+)\. Out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) FUMBLES\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Out of bounds\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1319,7 +1406,7 @@ def parser(
                     temp_df["is_complete_pass"] = True
                     temp_df["is_out_of_bounds"] = False
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1340,8 +1427,8 @@ def parser(
                     temp_df["is_complete_pass"] = True
                     temp_df["is_out_of_bounds"] = False
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
-                        r"complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\, ]+) for " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
+                        r"complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for " +
                         r"([0-9\-]+) yard[s]?\. " +
                         r"Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1365,7 +1452,7 @@ def parser(
                     temp_df["is_interception"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) ran out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) ran out of bounds\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1392,11 +1479,11 @@ def parser(
                     temp_df["is_interception"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
                         r"[INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)\. " +
-                        r"Intercepted by ([a-zA-Z\'\.\-\, ]+) at " +
+                        r"Intercepted by ([a-zA-Z\'\.\-\,\; ]+) at " +
                         r"([A-Za-z0-9\s]+)\. " +
-                        r"Pushed out of bounds by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"Pushed out of bounds by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1423,7 +1510,7 @@ def parser(
                     temp_df["is_interception"] = True
                     temp_df["is_return_touchdown"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. [TOUCHDOWN|touchdown]+\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. [TOUCHDOWN|touchdown]+\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1448,7 +1535,7 @@ def parser(
                     temp_df["is_interception"] = True
                     temp_df["is_lateral_return"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Lateral to ([a-zA-Z\'\.\-\, ]+) to ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]?\. Tackled by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Lateral to ([a-zA-Z\'\.\-\,\; ]+) to ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]?\. Tackled by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1479,7 +1566,7 @@ def parser(
                     temp_df["is_interception"] = True
                     temp_df["is_lateral_return"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Lateral to ([a-zA-Z\'\.\-\, ]+) to ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]?\. Tackled by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Lateral to ([a-zA-Z\'\.\-\,\; ]+) to ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]?\. Tackled by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1507,7 +1594,7 @@ def parser(
                     temp_df["is_incomplete_pass"] = True
                     temp_df["is_interception"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1530,7 +1617,7 @@ def parser(
                     temp_df["is_qb_spike"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) spikes the ball\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) spikes the ball\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0]
@@ -1543,7 +1630,7 @@ def parser(
                     temp_df["is_pass_attempt"] = True
                     temp_df["is_sack"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) steps back to pass\. Sacked at ([A-Za-z0-9\s]+) for yard[s]? \(([a-zA-Z\'\.\;\-\, ]+)\)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Sacked at ([A-Za-z0-9\s]+) for yard[s]? \(([a-zA-Z\'\.\;\-\, ]+)\)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1557,7 +1644,7 @@ def parser(
                     temp_df["is_pass_attempt"] = True
                     temp_df["is_sack"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) steps back to pass\. Sacked at ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]? \(([a-zA-Z\'\.\;\-\, ]+)\)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Sacked at ([A-Za-z0-9\s]+) for ([\-0-9]+) yard[s]? \(([a-zA-Z\'\.\;\-\, ]+)\)\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1578,7 +1665,7 @@ def parser(
                     temp_df["is_fumble"] = True
                     temp_df["is_fumble_forced"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed up the middle for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed up the middle for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1605,7 +1692,7 @@ def parser(
                     temp_df["is_fumble"] = True
                     temp_df["is_fumble_forced"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1631,7 +1718,7 @@ def parser(
                     temp_df["run_location"] = "middle"
                     temp_df["is_rush_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed up the middle " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed up the middle " +
                         r"for yard[s]?\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1647,7 +1734,7 @@ def parser(
                     temp_df["run_location"] = "middle"
                     temp_df["is_rush_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed up the middle " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed up the middle " +
                         r"for ([\-0-9]+) yard[s]?\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1663,7 +1750,7 @@ def parser(
                 ):
                     temp_df["is_rush_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed " +
                         r"([a-zA-Z]+) ([a-zA-Z]+) " +
                         r"for yard[s]?\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
@@ -1681,7 +1768,7 @@ def parser(
                 ):
                     temp_df["is_rush_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed " +
                         r"([a-zA-Z]+) ([a-zA-Z]+) " +
                         r"for ([\-0-9]+) yard[s]?\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
@@ -1701,7 +1788,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1717,7 +1804,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed up the middle for ([\-0-9]+) yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed up the middle for ([\-0-9]+) yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1735,7 +1822,7 @@ def parser(
                     temp_df["is_lateral_rush"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. Lateral to ([a-zA-Z\'\.\-\, ]+) to ([A-Za-z0-9\s]+) for ([0-9\-]) yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. Lateral to ([a-zA-Z\'\.\-\,\; ]+) to ([A-Za-z0-9\s]+) for ([0-9\-]) yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1756,7 +1843,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1773,7 +1860,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_rush_touchdown"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed " +
                         r"up the middle for " +
                         r"([\-0-9]+) yard[s]?\. [TOUCHDOWN|touchdown]+",
                         play_desc
@@ -1788,7 +1875,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_rush_touchdown"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) rushed " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed " +
                         r"([a-zA-Z]+) ([a-zA-Z]+) for " +
                         r"([\-0-9]+) yard[s]?\. [TOUCHDOWN|touchdown]+",
                         play_desc
@@ -1807,7 +1894,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_qb_scramble"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles " +
                         r"([a-zA-Z]+) ([a-zA-Z]+) for yards\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1828,7 +1915,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_qb_scramble"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles " +
                         r"up the middle for ([\-0-9]+) yards\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1848,7 +1935,7 @@ def parser(
                     temp_df["is_qb_scramble"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles " +
                         r"([a-zA-Z]+) ([a-zA-Z]+) for yards\. " +
                         r"Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1868,7 +1955,7 @@ def parser(
                     temp_df["is_qb_scramble"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles " +
                         r"up the middle for ([\-0-9]+) yards\. " +
                         r"Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1889,7 +1976,7 @@ def parser(
                     temp_df["is_touchdown"] = True
                     temp_df["is_rush_touchdown"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. [TOUCHDOWN|touchdown]+\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. [TOUCHDOWN|touchdown]+\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1905,7 +1992,7 @@ def parser(
                     temp_df["is_qb_scramble"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles " +
                         r"([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. " +
                         r"Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1924,7 +2011,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_qb_scramble"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles " +
                         r"([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. " +
                         r"Tackled by at ([A-Za-z0-9\s]+)\.",
                         play_desc
@@ -1946,7 +2033,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_qb_scramble"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. ([a-zA-Z\'\.\-\, ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1971,7 +2058,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_qb_scramble"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles up the middle for ([\-0-9]+) yards\. ([a-zA-Z\'\.\-\, ]+) ran out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles up the middle for ([\-0-9]+) yards\. ([a-zA-Z\'\.\-\,\; ]+) ran out of bounds\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1986,7 +2073,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_qb_scramble"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) scrambles ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. ([a-zA-Z\'\.\-\, ]+) ran out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yards\. ([a-zA-Z\'\.\-\,\; ]+) ran out of bounds\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -1999,7 +2086,7 @@ def parser(
                     temp_df["is_qb_kneel"] = True
                     temp_df["is_rush_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kneels at the ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kneels at the ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -2016,7 +2103,7 @@ def parser(
                 ):
                     temp_df["is_field_goal_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) ([0-9]+) yard[s]? field goal attempt is ([a-zA-Z\s]+)\, [Center|center]+\-([a-zA-Z\'\.\-\, ]+), [Holder|holder]+\-([a-zA-Z\'\.\-\, ]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) ([0-9]+) yard[s]? field goal attempt is ([a-zA-Z\s]+)\, [Center|center]+\-([a-zA-Z\'\.\-\,\; ]+), [Holder|holder]+\-([a-zA-Z\'\.\-\,\; ]+)\.",
                         play_desc
                     )
                     temp_df["kicker_player_name"] = play_arr[0][0]
@@ -2031,12 +2118,12 @@ def parser(
                 ):
                     temp_df["is_field_goal_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) yard[s]? field goal attempt is ([a-zA-Z\s]+)\, [Center|center]+\-([a-zA-Z\'\.\-\, ]+), [Holder|holder]+\-([a-zA-Z\'\.\-\, ]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) yard[s]? field goal attempt is ([a-zA-Z\s]+)\, [Center|center]+\-([a-zA-Z\'\.\-\,\; ]+), [Holder|holder]+\-([a-zA-Z\'\.\-\,\; ]+)\.",
                         play_desc
                     )
                     if len(play_arr) == 0:
                         play_arr = re.findall(
-                            r"([a-zA-Z\'\.\-\, ]+) ([0-9]+) yard[s]? field goal attempt is ([a-zA-Z\s]+)\, [Center|center]+\-([a-zA-Z\'\.\-\, ]+), [Holder|holder]+\-([a-zA-Z\'\.\-\, ]+)\.",
+                            r"([a-zA-Z\'\.\-\,\; ]+) ([0-9]+) yard[s]? field goal attempt is ([a-zA-Z\s]+)\, [Center|center]+\-([a-zA-Z\'\.\-\,\; ]+), [Holder|holder]+\-([a-zA-Z\'\.\-\,\; ]+)\.",
                             play_desc
                         )
                         temp_df["kicker_player_name"] = play_arr[0][0]
@@ -2062,7 +2149,7 @@ def parser(
                     temp_df["is_fumble_not_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
 
@@ -2098,9 +2185,9 @@ def parser(
                     temp_df["is_kickoff_attempt"] = True
                     temp_df["is_out_of_bounds"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from " +
                         r"([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. " +
-                        r"([a-zA-Z\'\.\-\, ]+) returns the kickoff\. " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) returns the kickoff\. " +
                         r"Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
@@ -2129,7 +2216,7 @@ def parser(
                     temp_df["is_fumble_not_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
 
@@ -2168,7 +2255,7 @@ def parser(
                     temp_df["is_fumble_not_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
 
@@ -2209,7 +2296,7 @@ def parser(
                     temp_df["is_fumble_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) returns the kickoff\. ([a-zA-Z\'\.\-\, ]+) FUMBLES, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble RECOVERED by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) returns the kickoff\. ([a-zA-Z\'\.\-\,\; ]+) FUMBLES, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble RECOVERED by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
 
@@ -2251,7 +2338,7 @@ def parser(
                     temp_df["is_fumble_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) returns the kickoff\. ([a-zA-Z\'\.\-\, ]+) FUMBLES, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble RECOVERED by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) returns the kickoff\. ([a-zA-Z\'\.\-\,\; ]+) FUMBLES, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble RECOVERED by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
 
@@ -2293,7 +2380,7 @@ def parser(
                     temp_df["is_fumble_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) returns the kickoff\. ([a-zA-Z\'\.\-\, ]+) FUMBLES\. Fumble RECOVERED by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) returns the kickoff\. ([a-zA-Z\'\.\-\,\; ]+) FUMBLES\. Fumble RECOVERED by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
 
@@ -2330,9 +2417,9 @@ def parser(
                 ):
                     temp_df["is_kickoff_attempt"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from " +
                         r"([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. " +
-                        r"([a-zA-Z\'\.\-\, ]+) returns the kickoff\. " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) returns the kickoff\. " +
                         r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
@@ -2357,7 +2444,7 @@ def parser(
                     temp_df["is_kickoff_attempt"] = True
                     temp_df["is_touchback"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. Touchback\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. Touchback\.",
                         play_desc
                     )
                     temp_df["kicker_player_name"] = play_arr[0][0]
@@ -2374,7 +2461,7 @@ def parser(
                     temp_df["is_punt_attempt"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) returned punt from the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) FUMBLES\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) returned punt from the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) FUMBLES\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2408,7 +2495,7 @@ def parser(
                     temp_df["is_punt_attempt"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) returned punt from the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\, ]+) FUMBLES\, forced by ([a-zA-Z\'\.\-\, ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) returned punt from the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) FUMBLES\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2423,17 +2510,17 @@ def parser(
                     temp_df["fumble_recovery_1_player_name"] = play_arr[0][9]
 
                     # temp_yl_1 = play_arr[0][10]
-                    # temp_yl_2 = play_arr[0][11]
+                    temp_yl_2 = play_arr[0][10]
 
                     # temp_yl_1 = get_yardline(temp_yl_1, posteam)
-                    # temp_yl_2 = get_yardline(temp_yl_2, posteam)
+                    temp_yl_2 = get_yardline(temp_yl_2, posteam)
                     # temp_df["fumble_recovery_1_yards"] = temp_yl_1 - temp_yl_2
                     temp_df["fumble_recovery_1_yards"] = 0
                     temp_df["return_yards"] = 0
 
                     if temp_yl_2 > 80:
                         temp_df["is_punt_inside_twenty"] = True
-                    del temp_yl_1, temp_yl_2
+                    del temp_yl_2
                 elif (
                     "punts yards" in play_desc.lower() and
                     "returned punt from" in play_desc.lower() and
@@ -2442,7 +2529,7 @@ def parser(
                     temp_df["is_punt_attempt"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) returned punt from the ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) returned punt from the ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2468,7 +2555,7 @@ def parser(
                     temp_df["is_punt_attempt"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) returned punt from the ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) returned punt from the ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2497,7 +2584,7 @@ def parser(
                     temp_df["is_fumble_not_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([0-9]+) yards to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([0-9]+) yards to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2532,7 +2619,7 @@ def parser(
                     temp_df["is_fumble_not_forced"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([0-9]+) yards to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\, ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([0-9]+) yards to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) [MUFFS|muffs]+ catch\. Fumble [RECOVERED|recovered]+ by ([A-Za-z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2565,7 +2652,7 @@ def parser(
                     temp_df["is_punt_out_of_bounds"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. Out of bounds\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. Out of bounds\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2585,7 +2672,7 @@ def parser(
                     temp_df["is_punt_in_endzone"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z]+) [End|end]+ [Zone|zone]+, [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. Touchback\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z]+) [End|end]+ [Zone|zone]+, [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. Touchback\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2600,7 +2687,7 @@ def parser(
                     temp_df["is_punt_downed"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. Fair catch by ([a-zA-Z\'\.\-\, ]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. Fair catch by ([a-zA-Z\'\.\-\,\; ]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2620,7 +2707,7 @@ def parser(
                     temp_df["is_punt_downed"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. Fair catch by ([a-zA-Z\'\.\-\, ]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. Fair catch by ([a-zA-Z\'\.\-\,\; ]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2640,7 +2727,7 @@ def parser(
                     temp_df["is_punt_downed"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. Downed by ([a-zA-Z\'\.\-\, ]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. Downed by ([a-zA-Z\'\.\-\,\; ]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2660,7 +2747,7 @@ def parser(
                     temp_df["is_out_of_bounds"] = True
 
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\, ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\, ]+)\. ([a-zA-Z\'\.\-\, ]+) returned punt from the ([A-Za-z0-9\s]+)\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) returned punt from the ([A-Za-z0-9\s]+)\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["punter_player_name"] = play_arr[0][0]
@@ -2678,6 +2765,31 @@ def parser(
                     if temp_yl_2 > 80:
                         temp_df["is_punt_inside_twenty"] = True
                     del temp_yl_1, temp_yl_2
+                elif (
+                    "punt" in play_desc.lower() and
+                    "returned punt from" in play_desc.lower() and
+                    "touchdown" in play_desc.lower()
+                ):
+                    temp_df["is_punt_attempt"] = True
+                    temp_df["is_touchdown"] = True
+                    temp_df["is_return_touchdown"] = True
+                    temp_df["is_out_of_bounds"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([\-0-9]+) yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) returned punt from the ([A-Za-z0-9\s]+)\. [TOUCHDOWN|touchdown]+",
+                        play_desc
+                    )
+                    temp_df["punter_player_name"] = play_arr[0][0]
+                    temp_df["kick_distance"] = int(play_arr[0][1])
+                    temp_df["long_snapper_player_name"] = play_arr[0][3]
+                    temp_df["kickoff_returner_player_name"] = play_arr[0][4]
+                    # tacklers_arr = play_arr[0][6]
+                    temp_yl_1 = play_arr[0][5]
+
+                    temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    temp_df["return_yards"] = 100 - temp_yl_1
+
+                    del temp_yl_1
                 elif (
                     "tackled by" in play_desc.lower()
                 ):
@@ -2730,7 +2842,7 @@ def parser(
                     temp_df["is_penalty"] = True
 
                     play_arr = re.findall(
-                        r"PENALTY on ([A-Z]+)\-? ?([a-zA-Z\'\.\-\, ]+)\, ([a-zA-Z\s\/]+)\, ([0-9]+) yard[s]?,\.? ([a-zA-Z\s]+)\.",
+                        r"PENALTY on ([A-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+)\, ([a-zA-Z\s\/]+)\, ([0-9]+) yard[s]?,\.? ([a-zA-Z\s]+)\.",
                         play_desc
                     )
                     temp_df["penalty_team"] = play_arr[0][0]
