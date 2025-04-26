@@ -778,6 +778,46 @@ def parser(
                         temp_df["is_three_point_attempt_success"] = True
                 elif (
                     "-point conversion attempt" in play_desc.lower() and
+                    "pass" in play_desc.lower() and
+                    "intercepts the ball" in play_desc.lower() and
+                    "tackled by at" in play_desc.lower() and
+                    "defensive conversion recovery" in play_desc.lower()
+                ):
+                    play_arr = re.findall(
+                        r"([A-Za-z ]+)\-? ?[POINT|point]+ [CONVERSION|conversion]+ [ATTEMPT|attempt]+\. ([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. ([a-zA-Z\'\.\-\,\; ]+) intercepts the ball\. Tackled by at ([A-Za-z0-9\s]+)\. ([A-Za-z ]+)\-? ?[POINT|point]+ [ATTEMPT|attempt]+ ([a-zA-Z]+)\. [DEFENSIVE|defensive]+ [CONVERSION|conversion]+ [RECOVERY|recovery]+ ([A-Z]+)\.",
+                        play_desc
+                    )
+                    if "one" in play_arr[0][0].lower():
+                        temp_df["is_one_point_attempt"] = True
+                    elif "two" in play_arr[0][0].lower():
+                        temp_df["is_two_point_attempt"] = True
+                    elif "three" in play_arr[0][0].lower():
+                        temp_df["is_three_point_attempt"] = True
+
+                    temp_df["passer_player_name"] = play_arr[0][1]
+                    temp_df["interception_player_name"] = play_arr[0][2]
+                    success_or_failure = play_arr[0][5].lower()
+
+                    if (
+                        "suc" in success_or_failure and
+                        "one" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_one_point_attempt_success"] = True
+                    elif (
+                        "suc" in success_or_failure and
+                        "two" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_two_point_attempt_success"] = True
+                    elif (
+                        "suc" in success_or_failure and
+                        "three" in play_arr[0][0].lower()
+                    ):
+                        temp_df["is_three_point_attempt_success"] = True
+
+                    if "suc" in play_arr[0][6]:
+                        temp_df["is_defensive_two_point_conv"] = True
+                elif (
+                    "-point conversion attempt" in play_desc.lower() and
                     "rushed up the middle" in play_desc.lower() and
                     "fumbles" in play_desc.lower() and
                     "forced by" in play_desc.lower() and
@@ -1012,10 +1052,10 @@ def parser(
                 ):
                     temp_df["is_pass_attempt"] = True
                     temp_df["is_incomplete_pass"] = True
-                    play_desc = play_desc.replace("[","")
-                    play_desc = play_desc.replace("]","")
+                    play_desc = play_desc.replace("[", "")
+                    play_desc = play_desc.replace("]", "")
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Pass incomplete ([a-zA-Z]+) ([a-zA-Z]+) intended for ([a-zA-Z\'\.\-\,\; ]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) steps back to pass\. Pass incomplete ([a-zA-Z]+) ([a-zA-Z]+) intended for \(?([a-zA-Z\'\.\-\,\; ]+)\)?\.",
                         play_desc
                     )
                     temp_df["passer_player_name"] = play_arr[0][0]
@@ -1348,6 +1388,29 @@ def parser(
                     # temp_df["yards_gained"] = int(play_arr[0][4])
 
                     tacklers_arr = play_arr[0][4]
+                elif (
+                    "pass" in play_desc.lower() and
+                    "complete" in play_desc.lower() and
+                    "tackled by at" in play_desc.lower()
+                ):
+                    temp_df["is_pass_attempt"] = True
+                    temp_df["is_complete_pass"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) " +
+                        r"complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for " +
+                        r"([0-9\-]+) yard[s]?\. " +
+                        r"Tackled by at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["passer_player_name"] = play_arr[0][0]
+                    temp_df["pass_length"] = play_arr[0][1]
+                    temp_df["pass_location"] = play_arr[0][2]
+                    temp_df["receiver_player_name"] = play_arr[0][3]
+                    temp_df["receiving_yards"] = int(play_arr[0][4])
+                    temp_df["passing_yards"] = int(play_arr[0][4])
+                    temp_df["yards_gained"] = int(play_arr[0][4])
+
+                    # tacklers_arr = play_arr[0][5]
                 elif (
                     "pass" in play_desc.lower() and
                     "complete" in play_desc.lower() and
@@ -1835,7 +1898,6 @@ def parser(
                     temp_df["yards_gained"] += int(play_arr[0][6])
 
                     tacklers_arr = play_arr[0][7]
-
                 elif (
                     "rushed" in play_desc.lower() and
                     "pushed out of bounds by" in play_desc.lower()
@@ -2096,6 +2158,30 @@ def parser(
                     temp_df["yards_gained"] = yardline_100 - temp_yl_1
                     del temp_yl_1
                 # Field Goals
+                elif (
+                    "field goal attempt is returned" in play_desc.lower() and
+                    "end zone" in play_desc.lower() and
+                    "touchdown" in play_desc.lower()
+                ):
+                    temp_df["is_field_goal_attempt"] = True
+                    temp_df["is_return_touchdown"] = True
+                    temp_df["return_team"] = defteam
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+)( [0-9]+)? yard[s]? field goal attempt is ([a-zA-Z\s]+)\, [Center|center]+\-([a-zA-Z\'\.\-\,\; ]+), [Holder|holder]+\-([a-zA-Z\'\.\-\,\; ]+)\. Returned by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Z]+) [END|end]+ [ZONE|zone]+\. [TOUCHDOWN|touchdown]+",
+                        play_desc
+                    )
+
+                    temp_df["kicker_player_name"] = play_arr[0][0]
+                    if len(play_arr[0][1]) == 0:
+                        temp_df["kick_distance"] = yardline_100 + 10 + 7
+                    else:
+                        temp_df["kick_distance"] = int(play_arr[0][1])
+                    temp_df["field_goal_result"] = "miss"
+                    temp_df["long_snapper_player_name"] = play_arr[0][3]
+                    temp_df["holder_player_name"] = play_arr[0][4]
+                    temp_df["punt_returner_player_name"] = play_arr[0][5]
+                    temp_df["return_yards"] = 100
                 elif (
                     "field goal attempt is" in play_desc.lower() and
                     "penalty on" not in play_desc.lower() and
