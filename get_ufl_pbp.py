@@ -2728,6 +2728,40 @@ def parser(
                 elif (
                     "punts" in play_desc.lower() and
                     "muffs catch" in play_desc.lower() and
+                    "fumbles, out of bounds" in play_desc.lower()
+                ):
+                    temp_df["is_punt_attempt"] = True
+                    temp_df["is_fumble"] = True
+                    temp_df["is_fumble_not_forced"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts ([0-9]+) yards to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) [MUFFS|muffs]+ catch\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, out of bounds",
+                        play_desc
+                    )
+                    temp_df["punter_player_name"] = play_arr[0][0]
+                    temp_df["kick_distance"] = int(play_arr[0][1])
+                    temp_df["long_snapper_player_name"] = play_arr[0][3]
+                    temp_df["kickoff_returner_player_name"] = play_arr[0][4]
+                    temp_df["fumbled_1_team"] = defteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][4]
+
+                    # temp_df["fumble_recovery_1_team"] = play_arr[0][5]
+                    # temp_df["fumble_recovery_1_player_name"] = play_arr[0][6]
+                    # tacklers_arr = play_arr[0][8]
+                    # temp_yl_1 = play_arr[0][7]
+                    temp_yl_2 = play_arr[0][2]
+
+                    # temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    temp_yl_2 = get_yardline(temp_yl_2, posteam)
+                    # temp_df["fumble_recovery_1_yards"] = temp_yl_1 - temp_yl_2
+                    temp_df["return_yards"] = 0
+
+                    if temp_yl_2 > 80:
+                        temp_df["is_punt_inside_twenty"] = True
+                    del temp_yl_2
+                elif (
+                    "punts" in play_desc.lower() and
+                    "muffs catch" in play_desc.lower() and
                     "fumble recovered by" in play_desc.lower() and
                     "tackled by at" in play_desc.lower()
                 ):
