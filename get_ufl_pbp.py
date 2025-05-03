@@ -556,6 +556,13 @@ def parser(
                     play_desc = play_desc.split(
                         "and the play was overturned."
                     )[-1]
+                if (
+                    "challenged the" in play_desc.lower() and
+                    "and the play was overturned." in play_desc.lower()
+                ):
+                    play_desc = play_desc.split(
+                        "and the play was overturned."
+                    )[-1]
 
                 # Handler for aborted plays (fumbled snap)
                 if "fumbles (aborted)." in play_desc.lower():
@@ -1893,6 +1900,23 @@ def parser(
                     tacklers_arr = play_arr[0][3]
                 elif (
                     "rushed" in play_desc.lower() and
+                    "tackled by at" in play_desc.lower()
+                ):
+                    temp_df["is_rush_attempt"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed " +
+                        r"([a-zA-Z]+) ([a-zA-Z]+) " +
+                        r"for ([\-0-9]+) yard[s]?\. " +
+                        r"Tackled by at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["rusher_player_name"] = play_arr[0][0]
+                    temp_df["run_location"] = play_arr[0][1]
+                    temp_df["run_gap"] = play_arr[0][2]
+                    temp_df["rushing_yards"] = int(play_arr[0][3])
+                    temp_df["yards_gained"] = int(play_arr[0][3])
+                elif (
+                    "rushed" in play_desc.lower() and
                     "tackled by" in play_desc.lower()
                 ):
                     temp_df["is_rush_attempt"] = True
@@ -1996,6 +2020,22 @@ def parser(
                     temp_df["rusher_player_name"] = play_arr[0][0]
                     temp_df["rushing_yards"] = int(play_arr[0][1])
                     temp_df["yards_gained"] = int(play_arr[0][1])
+                elif (
+                    "rushed" in play_desc.lower() and
+                    "touchdown" in play_desc.lower() and
+                    "for yards" in play_desc.lower()
+                ):
+                    temp_df["is_rush_attempt"] = True
+                    temp_df["is_rush_touchdown"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for yard[s]?\. [TOUCHDOWN|touchdown]+",
+                        play_desc
+                    )
+                    temp_df["rusher_player_name"] = play_arr[0][0]
+                    temp_df["run_location"] = play_arr[0][1]
+                    temp_df["run_gap"] = play_arr[0][2]
+                    temp_df["rushing_yards"] = yardline_100
+                    temp_df["yards_gained"] = yardline_100
                 elif (
                     "rushed" in play_desc.lower() and
                     "touchdown" in play_desc.lower()
@@ -2906,6 +2946,26 @@ def parser(
                     if temp_yl_1 > 80:
                         temp_df["is_punt_inside_twenty"] = True
                 elif (
+                    "punts yards" in play_desc.lower() and
+                    "downed by" in play_desc.lower()
+                ):
+                    temp_df["is_punt_attempt"] = True
+                    temp_df["is_punt_downed"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. Downed by ([a-zA-Z\'\.\-\,\; ]+)\.",
+                        play_desc
+                    )
+                    temp_df["punter_player_name"] = play_arr[0][0]
+                    temp_yl_1 = play_arr[0][1]
+                    temp_yl_1 = get_yardline(temp_yl_1, posteam)
+
+                    temp_df["kick_distance"] = yardline_100 - temp_yl_1
+                    temp_df["long_snapper_player_name"] = play_arr[0][2]
+
+                    if temp_yl_1 > 80:
+                        temp_df["is_punt_inside_twenty"] = True
+                elif (
                     "punt" in play_desc.lower() and
                     "downed by" in play_desc.lower()
                 ):
@@ -2924,6 +2984,35 @@ def parser(
                     temp_yl_1 = get_yardline(temp_yl_1, posteam)
                     if temp_yl_1 > 80:
                         temp_df["is_punt_inside_twenty"] = True
+                elif (
+                    "punts yards" in play_desc.lower() and
+                    "returned punt from" in play_desc.lower() and
+                    "pushed out of bounds by" in play_desc.lower()
+                ):
+                    temp_df["is_punt_attempt"] = True
+                    temp_df["is_out_of_bounds"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. ([a-zA-Z\'\.\-\,\; ]+) returned punt from the ([A-Za-z0-9\s]+)\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["punter_player_name"] = play_arr[0][0]
+                    temp_yl_3 = play_arr[0][1]
+                    temp_yl_3 = get_yardline(temp_yl_3, posteam)
+                    temp_df["kick_distance"] = yardline_100 - temp_yl_3
+                    temp_df["long_snapper_player_name"] = play_arr[0][2]
+                    temp_df["kickoff_returner_player_name"] = play_arr[0][3]
+                    # tacklers_arr = play_arr[0][6]
+                    temp_yl_1 = play_arr[0][4]
+                    temp_yl_2 = play_arr[0][6]
+
+                    temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    temp_yl_2 = get_yardline(temp_yl_2, posteam)
+                    temp_df["return_yards"] = temp_yl_1 - temp_yl_2
+
+                    if temp_yl_2 > 80:
+                        temp_df["is_punt_inside_twenty"] = True
+                    del temp_yl_1, temp_yl_2
                 elif (
                     "punt" in play_desc.lower() and
                     "returned punt from" in play_desc.lower() and
