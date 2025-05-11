@@ -2064,6 +2064,36 @@ def parser(
                     temp_df["yards_gained"] = yardline_100
                 elif (
                     "rushed" in play_desc.lower() and
+                    "fumbles" in play_desc.lower() and
+                    "forced by" in play_desc.lower() and
+                    "fumble recovered by" in play_desc.lower() and
+                    "touchdown" in play_desc.lower()
+                ):
+                    temp_df["is_rush_attempt"] = True
+                    temp_df["is_return_touchdown"] = True
+                    temp_df["is_fumble"] = True
+                    temp_df["is_fumbled_forced"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([a-zA-Z\'\.\-\,\; ]+) [TOUCHDOWN|touchdown]+",
+                        play_desc
+                    )
+                    temp_df["rusher_player_name"] = play_arr[0][0]
+                    temp_df["run_location"] = play_arr[0][1]
+                    temp_df["run_gap"] = play_arr[0][2]
+                    temp_df["rushing_yards"] = int(play_arr[0][3])
+                    temp_df["yards_gained"] = int(play_arr[0][3])
+
+                    temp_df["fumbled_1_team"] = posteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][4]
+
+                    temp_df["forced_fumble_player_1_team"] = defteam
+                    temp_df["forced_fumble_player_1_play"] = play_arr[0][5]
+
+                    temp_df["fumble_recovery_1_team"] = play_arr[0][6]
+                    temp_df["fumble_recovery_1_player_name"] = play_arr[0][7]
+                    temp_df["fumble_recovery_1_yards"] = 0
+                elif (
+                    "rushed" in play_desc.lower() and
                     "touchdown" in play_desc.lower()
                 ):
                     temp_df["is_rush_attempt"] = True
