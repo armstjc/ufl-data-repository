@@ -16,8 +16,9 @@ from urllib.error import HTTPError
 
 import pandas as pd
 import requests
-from tqdm import tqdm
+# from tqdm import tqdm
 
+from get_ufl_standings import get_ufl_standings
 from utils import get_fox_api_key
 
 
@@ -57,7 +58,9 @@ def ufl_roster_data(
     A pandas `DataFrame` object with UFL roster data.
 
     """
+
     fox_key = get_fox_api_key()
+
     columns_order = [
         "season",
         "week",
@@ -80,10 +83,21 @@ def ufl_roster_data(
         + "Chrome/83.0.4103.97 Safari/537.36",
         # "Referer": "https://www.theufl.com/",
     }
-    now = datetime.now(UTC).isoformat()
+    now = datetime.now(UTC)
+
     temp_df = pd.DataFrame()
     roster_df = pd.DataFrame()
+
     roster_df_arr = []
+
+    teams_df = get_ufl_standings(
+        season=now.year
+    )
+    team_ids_arr = teams_df["team_id"].to_list()
+
+    del teams_df
+
+    now = datetime.now(UTC).isoformat()
 
     # Make the temp directories.
     try:
@@ -131,7 +145,7 @@ def ufl_roster_data(
 
     del current_month
 
-    for t_id in tqdm(range(1, 9)):
+    for t_id in team_ids_arr:
         url = (
             "https://api.foxsports.com/bifrost/v1/ufl/team/"
             + f"{t_id}/roster?apikey={fox_key}"
@@ -149,7 +163,9 @@ def ufl_roster_data(
                     temp_df = pd.DataFrame({"player_id": player_id}, index=[0])
 
                     try:
-                        temp_df["player_analytics_name"] = player["entityLink"][
+                        temp_df["player_analytics_name"] = player[
+                            "entityLink"
+                        ][
                             "analyticsName"
                         ]
                     except Exception:
@@ -204,7 +220,7 @@ def ufl_roster_data(
     roster_df["player_height"] = roster_df["height_in"] + (
         roster_df["height_ft"] * 12
     )
-    print(roster_df.dtypes)
+    # print(roster_df.dtypes)
 
     roster_df = roster_df[columns_order]
     roster_df.sort_values(

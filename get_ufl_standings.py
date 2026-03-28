@@ -26,7 +26,7 @@ def get_ufl_standings(
     save_csv: bool = False,
     save_parquet: bool = False,
     save_json: bool = False,
-):
+) -> pd.DataFrame:
     """
     Retrieves the current standings from the UFL,
     parses the data.
@@ -328,8 +328,8 @@ def get_ufl_standings(
 
     conf_standings_df = conf_standings_df[columns_order]
     lg_standings_df = lg_standings_df[columns_order]
-    print(conf_standings_df.dtypes)
-    print(lg_standings_df.dtypes)
+    # print(conf_standings_df.dtypes)
+    # print(lg_standings_df.dtypes)
 
     if save_csv is True:
         conf_standings_df.to_csv(
@@ -401,6 +401,8 @@ def get_ufl_standings(
                     indent=4,
                 )
             )
+
+    return lg_standings_df
 
 
 if __name__ == "__main__":

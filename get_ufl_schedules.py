@@ -182,7 +182,6 @@ def get_ufl_schedules(
                         temp_df["home_team_analytics_name"] = None
                         temp_df["home_team_name"] = "TBD"
 
-                    try:
                         if game["columns"][3]["subtext"] != "FINAL":
                             temp_df["scheduled_date"] = game["columns"][
                                 3
@@ -195,10 +194,24 @@ def get_ufl_schedules(
                             away_score, home_score = score.split("-")
                             temp_df["away_score"] = int(away_score)
                             temp_df["home_score"] = int(home_score)
-                    except Exception as e:
-                        logging.warning(
-                            f"Could not parse game state. Full exception `{e}`"
-                        )
+                    # try:
+                    #     if game["columns"][3]["subtext"] != "FINAL":
+                    #         temp_df["scheduled_date"] = game["columns"][
+                    #             3
+                    #         ]["text"]
+                    #         temp_df["broadcast_network"] = game["columns"][
+                    #             3
+                    #         ]["subtext"]
+                    #     else:
+                    #         score = game["columns"][3]["text"]
+                    #         away_score, home_score = score.split("-")
+                    #         temp_df["away_score"] = int(away_score)
+                    #         temp_df["home_score"] = int(home_score)
+                    # except Exception as e:
+                    #     logging.warning(
+                    #         "Could not parse game state. " +
+                    #         f"Full exception `{e}`"
+                    #     )
                     temp_df["stadium"] = game["columns"][4]["text"]
                     temp_df["location"] = game["columns"][4]["subtext"]
 
