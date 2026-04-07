@@ -83,7 +83,7 @@ def get_ufl_schedules(
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4)"
         + " AppleWebKit/537.36 (KHTML, like Gecko) "
-        + "Chrome/83.0.4103.97 Safari/537.36"
+        + "Chrome/147.0.7727.56 Safari/537.36"
     }
     url = (
         "https://api.foxsports.com/bifrost/v1/ufl/league/schedule"

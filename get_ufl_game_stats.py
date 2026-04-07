@@ -621,10 +621,10 @@ def fox_sports_player_stats_parser(
                 "kicking_FG_LONG": "uint16"
             }
         )
-        kicking_df.loc[kicking_df["kicking_FGA"] > 0, "kicking_FG%"] = round(
-            kicking_df["kicking_FGM"] / kicking_df["kicking_FGA"],
-            4
-        )
+        # kicking_df.loc[kicking_df["kicking_FGA"] > 0, "kicking_FG%"] = round(
+        #     kicking_df["kicking_FGM"] / kicking_df["kicking_FGA"],
+        #     4
+        # )
 
     # Punting
     if len(punting_df_arr) > 0:
@@ -892,7 +892,7 @@ def get_ufl_game_stats(
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4)"
         + " AppleWebKit/537.36 (KHTML, like Gecko) "
-        + "Chrome/83.0.4103.97 Safari/537.36",
+        + "Chrome/147.0.7727.56 Safari/537.36",
         # "Referer": "https://www.theufl.com/",
     }
     now = datetime.now(UTC).isoformat()
@@ -908,8 +908,17 @@ def get_ufl_game_stats(
         + f"download/ufl-schedule/{season}_ufl_schedule.parquet"
     )
 
+    # schedule_df = schedule_df[
+    #     (schedule_df["away_score"] > -1) | (schedule_df["home_score"] > -1)
+    # ]
+    schedule_df = schedule_df.astype(
+        {
+            "game_date":"datetime64[ms]"
+        },
+    )
+
     schedule_df = schedule_df[
-        (schedule_df["away_score"] > -1) | (schedule_df["home_score"] > -1)
+        schedule_df["game_date"] <= datetime.now()
     ]
 
     if len(schedule_df) == 0:
