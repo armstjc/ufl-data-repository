@@ -2895,7 +2895,7 @@ def get_ufl_pbp(
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4)"
         + " AppleWebKit/537.36 (KHTML, like Gecko) "
-        + "Chrome/125.0.0.0 Safari/537.36",
+        + "Chrome/147.0.7727.56 Safari/537.36",
         # "Referer": "https://www.theufl.com/",
     }
     now = datetime.now(UTC).isoformat()
