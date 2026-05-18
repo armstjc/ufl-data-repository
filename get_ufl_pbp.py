@@ -1472,6 +1472,49 @@ def parser(
                 elif (
                     "pass" in play_desc.lower() and
                     "complete" in play_desc.lower() and
+                    "for yards" in play_desc.lower() and
+                    "fumble" in play_desc.lower() and
+                    "forced by" in play_desc.lower() and
+                    "recovered by" in play_desc.lower() and
+                    "tackled by" in play_desc.lower()
+                ):
+                    temp_df["is_pass_attempt"] = True
+                    temp_df["is_complete_pass"] = True
+                    temp_df["is_fumble"] = True
+                    temp_df["is_fumble_forced"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([a-zA-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["passer_player_name"] = play_arr[0][0]
+                    temp_df["pass_length"] = play_arr[0][1]
+                    temp_df["pass_location"] = play_arr[0][2]
+                    temp_df["receiver_player_name"] = play_arr[0][3]
+                    temp_df["receiving_yards"] = 0
+                    temp_df["passing_yards"] =   0
+                    temp_df["yards_gained"] =    0
+
+                    temp_df["fumbled_1_team"] = posteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][4]
+
+                    temp_df["forced_fumble_player_1_team"] = defteam
+                    temp_df["forced_fumble_player_1_player_name"] = play_arr[0][5]
+
+                    temp_df["fumble_recovery_1_team"] = play_arr[0][6]
+                    temp_df["fumble_recovery_1_player_name"] = play_arr[0][7]
+
+                    temp_yl_1 = play_arr[0][8]
+                    temp_yl_2 = play_arr[0][10]
+
+                    temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    temp_yl_2 = get_yardline(temp_yl_2, posteam)
+                    temp_df["fumble_recovery_1_yards"] = temp_yl_2 - temp_yl_1
+
+                    tacklers_arr = play_arr[0][9]
+                elif (
+                    "pass" in play_desc.lower() and
+                    "complete" in play_desc.lower() and
                     "fumble" in play_desc.lower() and
                     "forced by" in play_desc.lower() and
                     "recovered by" in play_desc.lower() and
@@ -1756,15 +1799,58 @@ def parser(
                         r"Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
+                    if len(play_arr) == 0:
+                        play_arr = re.findall(
+                            r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) complete[\[\] a-zA-Z\'\.\-\,\s]*\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\. Catch made by ([a-zA-Z\'\.\-\,\; ]+) for ([0-9\-]+) yard[s]?\.",
+                            play_desc
+                        )
+                        temp_df["passer_player_name"] = play_arr[0][0]
+                        temp_df["pass_length"] = play_arr[0][1]
+                        temp_df["pass_location"] = play_arr[0][2]
+                        temp_df["receiver_player_name"] = play_arr[0][5]
+                        temp_df["receiving_yards"] = int(play_arr[0][6])
+                        temp_df["passing_yards"] = int(play_arr[0][6])
+                        temp_df["yards_gained"] = int(play_arr[0][6])
+
+                        tacklers_arr = play_arr[0][3]
+                    else:
+                        temp_df["passer_player_name"] = play_arr[0][0]
+                        temp_df["pass_length"] = play_arr[0][1]
+                        temp_df["pass_location"] = play_arr[0][2]
+                        temp_df["receiver_player_name"] = play_arr[0][3]
+                        temp_df["receiving_yards"] = int(play_arr[0][4])
+                        temp_df["passing_yards"] = int(play_arr[0][4])
+                        temp_df["yards_gained"] = int(play_arr[0][4])
+
+                        tacklers_arr = play_arr[0][5]
+                elif (
+                    "pass" in play_desc.lower() and
+                    "intercepted" in play_desc.lower() and
+                    "touchback." in play_desc.lower()
+                ):
+                    temp_df["is_pass_attempt"] = True
+                    temp_df["is_incomplete_pass"] = True
+                    temp_df["is_interception"] = True
+                    temp_df["is_out_of_bounds"] = True
+                    temp_df["is_touchback"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) pass ([a-zA-Z]+) ([a-zA-Z]+) [INTERCEPTED|intercepted]+ at ([A-Za-z0-9\s]+)[\[\] a-zA-Z\'\.\-\,\s]*\. Intercepted by ([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Touchback\.",
+                        play_desc
+                    )
                     temp_df["passer_player_name"] = play_arr[0][0]
                     temp_df["pass_length"] = play_arr[0][1]
                     temp_df["pass_location"] = play_arr[0][2]
-                    temp_df["receiver_player_name"] = play_arr[0][3]
-                    temp_df["receiving_yards"] = int(play_arr[0][4])
-                    temp_df["passing_yards"] = int(play_arr[0][4])
-                    temp_df["yards_gained"] = int(play_arr[0][4])
 
-                    tacklers_arr = play_arr[0][5]
+                    temp_df["interception_player_name"] = play_arr[0][4]
+                    # tacklers_arr = play_arr[0][6]
+                    # temp_yl_1 = play_arr[0][5]
+                    # temp_yl_2 = play_arr[0][7]
+
+                    # temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    # temp_yl_2 = get_yardline(temp_yl_2, posteam)
+
+                    temp_df["return_team"] = defteam
+                    temp_df["return_yards"] = 0
                 elif (
                     "pass" in play_desc.lower() and
                     "intercepted" in play_desc.lower() and
@@ -2394,6 +2480,36 @@ def parser(
                     tacklers_arr = play_arr[0][7]
                 elif (
                     "rushed" in play_desc.lower() and
+                    "fumbles" in play_desc.lower() and
+                    "forced by" in play_desc.lower() and
+                    "fumble recovered by" in play_desc.lower() and
+                    "pushed out of bounds by" in play_desc.lower()
+                ):
+                    temp_df["is_rush_attempt"] = True
+                    temp_df["is_out_of_bounds"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) rushed ([a-zA-Z]+) ([a-zA-Z]+) for ([\-0-9]+) yard[s]?\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Pushed out of bounds by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["rusher_player_name"] = play_arr[0][0]
+                    temp_df["run_location"] = play_arr[0][1]
+                    temp_df["run_gap"] = play_arr[0][2]
+                    temp_df["rushing_yards"] = int(play_arr[0][3])
+                    temp_df["yards_gained"] = int(play_arr[0][3])
+
+                    temp_df["fumbled_1_team"] = posteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][4]
+
+                    temp_df["forced_fumble_player_1_team"] = defteam
+                    temp_df["forced_fumble_player_1_play"] = play_arr[0][5]
+
+                    temp_df["fumble_recovery_1_team"] = play_arr[0][6]
+                    temp_df["fumble_recovery_1_player_name"] = play_arr[0][7]
+                    temp_df["fumble_recovery_1_yards"] = 0
+
+                    tacklers_arr = play_arr[0][4]
+                elif (
+                    "rushed" in play_desc.lower() and
                     "pushed out of bounds by" in play_desc.lower()
                 ):
                     temp_df["is_rush_attempt"] = True
@@ -2580,6 +2696,35 @@ def parser(
                     temp_df["yards_gained"] = yardline_100 - temp_yl_1
                 elif (
                     "scrambles" in play_desc.lower() and
+                    "for yards." in play_desc.lower() and
+                    "forced by" in play_desc.lower() and
+                    "fumble recovered by" in play_desc.lower() and
+                    "tackled by" in play_desc.lower()
+                ):
+                    temp_df["is_rush_attempt"] = True
+                    temp_df["is_qb_scramble"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles ([a-zA-Z]+) ([a-zA-Z]+) for yards\. ([a-zA-Z\'\.\-\,\; ]+) [FUMBLES|fumbles]+\, forced by ([a-zA-Z\'\.\-\,\; ]+)\. Fumble [RECOVERED|recovered]+ by ([A-Z]+)\-? ?([a-zA-Z\'\.\-\,\; ]+) at ([A-Za-z0-9\s]+)\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["rusher_player_name"] = play_arr[0][0]
+                    temp_df["rushing_yards"] = 0
+                    temp_df["yards_gained"] =  0
+                    temp_df["run_location"] = "middle"
+
+                    temp_df["fumbled_1_team"] = posteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][3]
+
+                    temp_df["forced_fumble_player_1_team"] = defteam
+                    temp_df["forced_fumble_player_1_play"] = play_arr[0][4]
+
+                    temp_df["fumble_recovery_1_team"] = play_arr[0][5]
+                    temp_df["fumble_recovery_1_player_name"] = play_arr[0][6]
+                    temp_df["fumble_recovery_1_yards"] = 0
+
+                    tacklers_arr = play_arr[0][8]
+                elif (
+                    "scrambles" in play_desc.lower() and
                     "for yards" in play_desc.lower() and
                     "tackled by" in play_desc.lower()
                 ):
@@ -2636,9 +2781,7 @@ def parser(
                     temp_df["is_rush_attempt"] = True
                     temp_df["is_qb_scramble"] = True
                     play_arr = re.findall(
-                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles " +
-                        r"up the middle for ([\-0-9]+) yards\. " +
-                        r"Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
+                        r"([a-zA-Z\'\.\-\,\; ]+) scrambles up the middle for ([\-0-9]+) yard[s]?\. Tackled by ([a-zA-Z\.\-\,\'\;\s]+) at ([A-Za-z0-9\s]+)\.",
                         play_desc
                     )
                     temp_df["rusher_player_name"] = play_arr[0][0]
@@ -3164,6 +3307,43 @@ def parser(
                     if temp_yl_2 > 80:
                         temp_df["is_kickoff_inside_twenty"] = True
                     del temp_yl_1, temp_yl_2
+                elif (
+                    "kicks" in play_desc.lower() and
+                    "muffs catch" in play_desc.lower() and
+                    "out of bounds" in play_desc.lower()
+                ):
+                    temp_df["is_kickoff_attempt"] = True
+                    temp_df["is_fumble"] = True
+                    temp_df["is_fumble_not_forced"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from ([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. ([a-zA-Z\'\.\-\,\; ]+) [MUFFS|muffs]+ catch\. Out of bounds\.",
+                        play_desc
+                    )
+
+                    temp_df["kicker_player_name"] = play_arr[0][0]
+                    temp_df["kick_distance"] = int(play_arr[0][1])
+                    temp_df["kickoff_returner_player_name"] = play_arr[0][4]
+
+                    temp_df["fumbled_1_team"] = posteam
+                    temp_df["fumbled_1_player_name"] = play_arr[0][4]
+
+                    # temp_df["fumble_recovery_1_team"] = play_arr[0][5]
+                    # temp_df["fumble_recovery_1_player_name"] = play_arr[0][6]
+
+                    temp_yl_1 = play_arr[0][3]
+                    # temp_yl_2 = play_arr[0][9]
+
+                    # tacklers_arr = play_arr[0][8]
+
+                    temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    # temp_yl_2 = get_yardline(temp_yl_2, posteam)
+                    temp_df["fumble_recovery_1_yards"] = 0
+                    temp_df["return_yards"] = 0
+
+                    if temp_yl_1 > 80:
+                        temp_df["is_kickoff_inside_twenty"] = True
+                    del temp_yl_1
                 elif (
                     "kicks" in play_desc.lower() and
                     "muffs catch" in play_desc.lower() and
@@ -3782,6 +3962,26 @@ def parser(
                     if temp_yl_2 > 80:
                         temp_df["is_punt_inside_twenty"] = True
                     del temp_yl_2
+                elif (
+                    "punts yards" in play_desc.lower() and
+                    "returned punt from" not in play_desc.lower() and
+                    "out of bounds" in play_desc.lower()
+                ):
+                    temp_df["is_punt_attempt"] = True
+                    temp_df["is_punt_out_of_bounds"] = True
+
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) punts yard[s]? to ([A-Za-z0-9\s]+), [center|Center]+\-? ?([a-zA-Z\'\.\-\,\; ]+)\. Out of bounds\.",
+                        play_desc
+                    )
+                    temp_df["punter_player_name"] = play_arr[0][0]
+                    temp_df["kick_distance"] = 0
+                    temp_df["long_snapper_player_name"] = play_arr[0][2]
+
+                    # temp_yl_1 = play_arr[0][2]
+                    # temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    # if temp_yl_1 > 80:
+                    #     temp_df["is_punt_inside_twenty"] = True
                 elif (
                     "punt" in play_desc.lower() and
                     "returned punt from" not in play_desc.lower() and
