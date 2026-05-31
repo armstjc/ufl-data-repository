@@ -3577,6 +3577,33 @@ def parser(
                 elif (
                     "kicks" in play_desc.lower() and
                     "returns the kickoff" in play_desc.lower() and
+                    "tackled by at" in play_desc.lower()
+                ):
+                    temp_df["is_kickoff_attempt"] = True
+                    play_arr = re.findall(
+                        r"([a-zA-Z\'\.\-\,\; ]+) kicks ([\-0-9]+) yard[s]? from " +
+                        r"([A-Za-z0-9\s]+) to the ([A-Za-z0-9\s]+)\. " +
+                        r"([a-zA-Z\'\.\-\,\; ]+) returns the kickoff\. " +
+                        r"Tackled by at ([A-Za-z0-9\s]+)\.",
+                        play_desc
+                    )
+                    temp_df["kicker_player_name"] = play_arr[0][0]
+                    temp_df["kick_distance"] = int(play_arr[0][1])
+                    temp_yl_1 = play_arr[0][3]
+                    temp_df["kickoff_returner_player_name"] = play_arr[0][4]
+                    # tacklers_arr = play_arr[0][5]
+                    temp_yl_2 = play_arr[0][5]
+
+                    temp_yl_1 = get_yardline(temp_yl_1, posteam)
+                    temp_yl_2 = get_yardline(temp_yl_2, posteam)
+                    temp_df["return_yards"] = temp_yl_1 - temp_yl_2
+
+                    if temp_yl_2 > 80:
+                        temp_df["is_kickoff_inside_twenty"] = True
+                    del temp_yl_1, temp_yl_2
+                elif (
+                    "kicks" in play_desc.lower() and
+                    "returns the kickoff" in play_desc.lower() and
                     "tackled by" in play_desc.lower()
                 ):
                     temp_df["is_kickoff_attempt"] = True
